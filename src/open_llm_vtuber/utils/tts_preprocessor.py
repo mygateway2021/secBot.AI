@@ -23,7 +23,7 @@ def tts_filter(
         remove_special_char (bool): Whether to remove special characters.
         ignore_brackets (bool): Whether to ignore text within brackets.
         ignore_parentheses (bool): Whether to ignore text within parentheses.
-        ignore_asterisks (bool): Whether to ignore text within asterisks.
+        ignore_asterisks (bool): Whether to ignore asterisk emphasis markers (keeps the enclosed text).
         translator (TranslateInterface, optional):
             The translator to use. If None, we'll skip the translation. Defaults to None.
 
@@ -179,16 +179,29 @@ def filter_angle_brackets(text: str) -> str:
 
 def filter_asterisks(text: str) -> str:
     """
-    Removes text enclosed within asterisks of any length (*, **, ***, etc.) from a string.
+    Removes common markdown asterisk emphasis markers while preserving the enclosed text.
+
+    This prevents TTS from skipping emphasized words like `**important**` or `*note*`.
 
     Args:
         text: The input string.
 
     Returns:
-        The string with asterisk-enclosed text removed.
+        The string with emphasis markers stripped.
     """
-    # Handle asterisks of any length (*, **, ***, etc.)
-    filtered_text = re.sub(r"\*{1,}((?!\*).)*?\*{1,}", "", text)
+    if not isinstance(text, str):
+        raise TypeError("Input must be a string")
+    if not text:
+        return text
+
+    # Strip markdown emphasis markers while keeping content.
+    # Order matters: handle ***bold+italic*** first, then **bold**, then *italic*.
+    filtered_text = text
+    filtered_text = re.sub(
+        r"(?<!\\)\*\*\*(\S(?:[^\n]*?\S)?)\*\*\*", r"\1", filtered_text
+    )
+    filtered_text = re.sub(r"(?<!\\)\*\*(\S(?:[^\n]*?\S)?)\*\*", r"\1", filtered_text)
+    filtered_text = re.sub(r"(?<!\\)\*(\S(?:[^\n]*?\S)?)\*", r"\1", filtered_text)
 
     # Clean up any extra spaces
     filtered_text = re.sub(r"\s+", " ", filtered_text).strip()

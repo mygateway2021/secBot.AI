@@ -17,6 +17,7 @@ class TextSource(Enum):
 
     INPUT = "input"  # Main user input/transcription
     CLIPBOARD = "clipboard"  # Text from clipboard
+    DAILY_SCHEDULE = "daily_schedule"  # User's daily schedule/todo list
 
 
 @dataclass

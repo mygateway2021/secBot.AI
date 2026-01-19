@@ -1,0 +1,203 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "settings": "Settings",
+    "close": "Close",
+    "accept": "Accept"
+  },
+  "settings": {
+    "tabs": {
+      "general": "General",
+      "live2d": "Live2D",
+      "asr": "ASR",
+      "tts": "TTS",
+      "agent": "Agent",
+      "microsoftTodo": "Microsoft To Do",
+      "about": "About"
+    },
+    "microsoftTodo": {
+      "description": "Configure Microsoft To Do integration used by Daily Life.",
+      "todoBackend": "Todo backend",
+      "backendOffline": "Offline (local)",
+      "backendMicrosoftTodo": "Microsoft To Do (online)",
+      "clientId": "Client ID",
+      "clientIdHelp": "Azure App (public client) Application (client) ID.",
+      "tenantId": "Tenant ID",
+      "tenantIdHelp": "Usually 'common'. Use your tenant GUID if needed.",
+      "scopes": "Scopes",
+      "scopesHelp": "Comma-separated, e.g. Tasks.ReadWrite",
+      "myDayListId": "My Day list ID",
+      "myDayListIdHelp": "The To Do list ID to read/write tasks. Use 'Fetch lists' to discover IDs.",
+      "fetchLists": "Fetch lists",
+      "selectList": "Select list",
+      "listsLoaded": "Lists loaded",
+      "listsLoadFailed": "Failed to load lists",
+      "listUseBeta": "Use Graph beta for listing",
+      "listUseBetaHelp": "Enables experimental beta listing. v1.0 CRUD remains unchanged.",
+      "filterIsOnMyDay": "Filter My Day by isOnMyDay (beta)",
+      "filterIsOnMyDayHelp": "If the beta property is missing, a category tag fallback is used.",
+      "categoryTag": "My Day category tag",
+      "categoryTagHelp": "Fallback when isOnMyDay is unavailable. Tasks with this category are treated as My Day.",
+      "reload": "Reload",
+      "saveNow": "Save now",
+      "noteRestart": "Note: you may need to reconnect/sign-in after changing credentials.",
+      "saved": "Saved",
+      "saveFailed": "Save failed",
+      "loadFailed": "Failed to load conf.yaml"
+    },
+    "general": {
+      "language": "Language",
+      "useCameraBackground": "Use Camera Background",
+      "showSubtitle": "Show Subtitle",
+      "backgroundImage": "Background Image",
+      "customBgUrlPlaceholder": "Enter image URL",
+      "customBgUrl": "Or enter a custom background URL",
+      "characterPreset": "Character Preset",
+      "configureCharacter": "Configure character",
+      "configureCharacterTitle": "Configure character YAML: {{filename}}",
+      "configureCharacterSaved": "Character YAML saved",
+      "configureCharacterLoadFailed": "Failed to load character YAML",
+      "configureCharacterSaveFailed": "Failed to save character YAML",
+      "yamlSyntaxInvalid": "YAML syntax invalid",
+      "wsUrl": "WebSocket URL",
+      "baseUrl": "Base URL",
+      "imageCompressionQuality": "Image Compression Quality",
+      "imageCompressionQualityPlaceholder": "Enter compression quality (0-100)",
+      "imageCompressionQualityHelp": "JPEG compression quality (0.1-1.0). Default is 0.8 to reduce file size when transmitting images to AI models, as we don't compress images during API transmission which could result in large file sizes.",
+      "imageMaxWidth": "Image Max Width",
+      "imageMaxWidthPlaceholder": "Enter maximum width in pixels",
+      "imageMaxWidthHelp": "Maximum width for image resizing. Images exceeding this width will be proportionally scaled down. Set to 0 for no size limit. This feature exists because some AI models may have limitations when processing very large images. However, most AI models can handle images automatically, so the default is 0 (no restriction) to preserve your original images."
+    },
+    "live2d": {
+      "pointerInteractive": "Pointer Interactive",
+      "scrollToResize": "Enable Scroll to Resize"
+    },
+    "asr": {
+      "autoStopMic": "Auto Stop Mic When AI Start Speaking",
+      "autoStopMicDesc": "Automatically stops microphone when AI begins speaking to prevent audio feedback",
+      "autoStartMicOnConvEnd": "Auto Start Mic When Conversation End",
+      "autoStartMicOnConvEndDesc": "Automatically restarts microphone when AI finishes speaking for seamless conversation",
+      "autoStartMicOn": "Auto Start Mic When AI Interrupted",
+      "autoStartMicOnDesc": "Automatically restarts microphone when you interrupt AI for continuous interaction",
+      "positiveSpeechThreshold": "Speech Prob Threshold",
+      "positiveSpeechThresholdDesc": "Minimum confidence level (1-100) required to detect speech. Higher values reduce false positives",
+      "negativeSpeechThreshold": "Negative Speech Threshold",
+      "negativeSpeechThresholdDesc": "Confidence level (0-100) below which speech detection stops. Lower values make detection less sensitive",
+      "redemptionFrames": "Redemption Frames",
+      "redemptionFramesDesc": "Number of consecutive frames (1-100) needed to confirm speech detection. Higher values reduce noise triggers"
+    },
+    "agent": {
+      "allowProactiveSpeak": "Allow AI to Speak Proactively",
+      "idleSecondsToSpeak": "Idle seconds allow AI to speak",
+      "allowButtonTrigger": "Prompt AI to Speak via Raise Hand Button"
+    },
+    "about": {
+      "title": "Open LLM VTuber Frontend",
+      "version": "Version",
+      "projectLinks": "Project Links",
+      "github": "GitHub",
+      "documentation": "Documentation",
+      "license": "License",
+      "copyright": "Copyright",
+      "viewLicense": "View License"
+    }
+  },
+  "footer": {
+    "typeYourMessage": "Type your message...",
+    "cameraControl": "Click to start camera",
+    "cameraStopping": "Click to stop camera",
+    "screenControl": "Click to start screen capture",
+    "screenStopping": "Click to stop screen capture"
+  },
+  "sidebar": {
+    "camera": "Camera",
+    "screen": "Screen",
+    "browser": "Browser",
+    "live": "Live",
+    "noMessages": "No messages yet. Start a conversation!",
+    "noBrowserSession": "No active browser session",
+    "browserSession": "Browser Session"
+  },
+  "group": {
+    "management": "Group Management",
+    "yourUuid": "Your UUID",
+    "inviteMember": "Invite Member",
+    "enterMemberUuid": "Enter member UUID",
+    "invite": "Invite",
+    "members": "Members",
+    "you": "You",
+    "leaveGroup": "Leave Group",
+    "removeMember": "Remove Member",
+    "leave": "Leave"
+  },
+  "history": {
+    "chatHistoryList": "Chat History List",
+    "noMessages": "No messages"
+  },
+  "dailyLife": {
+    "title": "Daily Life",
+    "addItemPlaceholder": "Add a new task...",
+    "noItems": "No tasks for today",
+    "addFirstTask": "Add your first task above",
+    "totalTasks": "Total Tasks",
+    "completed": "Completed",
+    "addToChat": "Add to Chat",
+    "clearCompleted": "Clear Completed",
+    "clearAll": "Clear All",
+    "previewTitle": "Preview (will be sent to AI):",
+    "taskAdded": "Task added!",
+    "pleaseEnterTask": "Please enter a task",
+    "maxTasksReached": "Maximum {{max}} tasks allowed",
+    "clearedCompleted": "Cleared {{count}} completed task(s)",
+    "noCompletedTasks": "No completed tasks to clear",
+    "noTasksToClear": "No tasks to clear",
+    "confirmClearAll": "Clear all tasks for today?",
+    "allTasksCleared": "All tasks cleared",
+    "noTasksToAdd": "No tasks to add",
+    "scheduleReady": "Schedule ready!",
+    "scheduleWillBeIncluded": "Your daily schedule will be included in the next message",
+    "autoMessage": "Here's my schedule for today. Can you help me organize my day?",
+    "scheduleTitle": "Daily schedule ({{date}}):",
+    "scheduleTodoLine": "TODO ({{count}}): {{items}}",
+    "scheduleDoneLine": "DONE ({{count}}): {{items}}"
+  },
+  "notification": {
+    "characterLoaded": "New Character Loaded",
+    "characterSwitched": "Character switched",
+    "historyLoaded": "History loaded",
+    "newConversation": "New Conversation Started",
+    "newChatHistory": "New chat history created",
+    "historyDeleteSuccess": "History deleted successfully",
+    "historyDeleteFail": "Failed to delete history"
+  },
+  "error": {
+    "cameraApiNotSupported": "Camera API is not supported on this device",
+    "noCameraFound": "No camera found on this device",
+    "failedStartCamera": "Failed to start camera",
+    "failedStartBackgroundCamera": "Failed to start background camera",
+    "failedStartScreenCapture": "Failed to start screen capture",
+    "failedStartVAD": "Failed to start VAD",
+    "llmCantHear": "The LLM can't hear you.",
+    "audioPlayback": "Audio playback error",
+    "enterValidUuid": "Please enter a valid UUID",
+    "cannotDeleteCurrentHistory": "Cannot delete current chat history",
+    "failedCapture": "Failed to capture {{source}} frame",
+    "failedParseWebSocket": "Failed to parse WebSocket message",
+    "websocketNotOpen": "WebSocket is not open.",
+    "vadMisfire": "Voice detected but too brief. Try speaking louder/longer, or adjust settings (lower speech threshold, lower negative threshold, reduce redemption frames)."
+  },
+  "aiState": {
+    "idle": "idle",
+    "thinking-speaking": "thinking/speaking",
+    "interrupted": "interrupted",
+    "loading": "loading",
+    "listening": "listening",
+    "waiting": "waiting"
+  },
+  "wsStatus": {
+    "connected": "Connected",
+    "connecting": "Connecting",
+    "clickToReconnect": "Click to Reconnect"
+  }
+} 

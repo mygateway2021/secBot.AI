@@ -24,10 +24,23 @@ def create_batch_input(
     metadata: Optional[Dict[str, Any]] = None,
 ) -> BatchInput:
     """Create batch input for agent processing"""
+    texts = [TextData(source=TextSource.INPUT, content=input_text, from_name=from_name)]
+
+    # Inject daily schedule as context if present
+    if metadata and "daily_schedule" in metadata:
+        daily_schedule_text = metadata["daily_schedule"]
+        if daily_schedule_text and daily_schedule_text.strip():
+            texts.insert(
+                0,  # Add at the beginning as context
+                TextData(
+                    source=TextSource.DAILY_SCHEDULE,
+                    content=daily_schedule_text,
+                    from_name=None,
+                ),
+            )
+
     return BatchInput(
-        texts=[
-            TextData(source=TextSource.INPUT, content=input_text, from_name=from_name)
-        ],
+        texts=texts,
         images=[
             ImageData(
                 source=ImageSource(img["source"]),

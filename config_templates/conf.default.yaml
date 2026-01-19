@@ -25,6 +25,7 @@ system_config:
     # Additional guidance for LLM on how to use tools
     # tool_guidance_prompt: 'tool_guidance_prompt' 
 
+
 # configuration for the default character
 character_config:
   conf_name: 'mao_pro' # The name of character configuration file.
@@ -469,7 +470,7 @@ character_config:
     remove_special_char: True # remove special characters like emoji from audio generation
     ignore_brackets: True # ignore everything inside brackets
     ignore_parentheses: True # ignore everything inside parentheses
-    ignore_asterisks: True # ignore everything wrapped inside asterisks
+    ignore_asterisks: True # strip '*' and '**' emphasis markers but keep the enclosed words
     ignore_angle_brackets: True # ignore everything wrapped inside <text>
 
     translator_config:

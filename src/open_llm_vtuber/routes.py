@@ -1,15 +1,23 @@
 import os
 import json
+from pathlib import Path
 from uuid import uuid4
 import numpy as np
 from datetime import datetime
-from fastapi import APIRouter, WebSocket, UploadFile, File, Response
+from fastapi import APIRouter, WebSocket, UploadFile, File, Response, HTTPException
+from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel
 from starlette.responses import JSONResponse
 from starlette.websockets import WebSocketDisconnect
 from loguru import logger
 from .service_context import ServiceContext
 from .websocket_handler import WebSocketHandler
 from .proxy_handler import ProxyHandler
+from .config_manager.utils import (
+    load_text_file_with_guess_encoding,
+    validate_config,
+)
+import yaml
 
 
 def init_client_ws_route(default_context_cache: ServiceContext) -> APIRouter:
@@ -83,15 +91,51 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
 
     router = APIRouter()
 
-    @router.get("/web-tool")
-    async def web_tool_redirect():
-        """Redirect /web-tool to /web_tool/index.html"""
-        return Response(status_code=302, headers={"Location": "/web-tool/index.html"})
+    class CharacterConfigUpdate(BaseModel):
+        """Request body for updating a character config YAML file."""
 
-    @router.get("/web_tool")
-    async def web_tool_redirect_alt():
-        """Redirect /web_tool to /web_tool/index.html"""
-        return Response(status_code=302, headers={"Location": "/web-tool/index.html"})
+        content: str
+
+    def _resolve_character_config_path(filename: str) -> Path:
+        """Resolve a character config filename to a safe on-disk path.
+
+        Args:
+            filename: The config filename (e.g. 'conf.yaml' or 'my_char.yaml').
+
+        Returns:
+            A Path pointing to the resolved config file.
+
+        Raises:
+            HTTPException: If the filename is invalid or outside the allowed directories.
+        """
+
+        if not filename:
+            raise HTTPException(status_code=400, detail="Missing filename")
+
+        # Disallow path traversal / nested paths
+        if Path(filename).name != filename:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+
+        if filename == "conf.yaml":
+            path = Path("conf.yaml")
+        else:
+            if not filename.endswith(".yaml"):
+                raise HTTPException(
+                    status_code=400, detail="Only .yaml files are allowed"
+                )
+
+            config_alts_dir = default_context_cache.config.system_config.config_alts_dir
+            base_dir = Path(config_alts_dir).resolve()
+            path = (base_dir / filename).resolve()
+
+            # Ensure resolved path is within config_alts_dir
+            if base_dir not in path.parents and path != base_dir:
+                raise HTTPException(status_code=400, detail="Invalid filename")
+
+        if not path.exists() or not path.is_file():
+            raise HTTPException(status_code=404, detail="Config file not found")
+
+        return path
 
     @router.get("/live2d-models/info")
     async def get_live2d_folder_info():
@@ -250,5 +294,46 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
         except Exception as e:
             logger.error(f"Error in TTS WebSocket connection: {e}")
             await websocket.close()
+
+    @router.get("/character-configs/{filename}")
+    async def get_character_config_yaml(filename: str):
+        """Return the raw YAML text for a character configuration file."""
+        path = _resolve_character_config_path(filename)
+        content = load_text_file_with_guess_encoding(str(path))
+        if content is None:
+            raise HTTPException(status_code=500, detail="Failed to read config file")
+        return JSONResponse({"filename": filename, "content": content})
+
+    @router.put("/character-configs/{filename}")
+    async def update_character_config_yaml(filename: str, body: CharacterConfigUpdate):
+        """Update a character configuration YAML file after validating syntax and schema."""
+        path = _resolve_character_config_path(filename)
+
+        try:
+            parsed = yaml.safe_load(body.content)
+        except yaml.YAMLError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid YAML: {e}")
+
+        if not isinstance(parsed, dict):
+            raise HTTPException(
+                status_code=400, detail="YAML root must be a mapping/object"
+            )
+
+        try:
+            validate_config(parsed)
+        except Exception as e:
+            # Return a readable error to the UI; avoid leaking stack traces.
+            raise HTTPException(
+                status_code=400, detail=f"Config validation failed: {e}"
+            )
+
+        try:
+            path.write_text(body.content, encoding="utf-8")
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to write config file: {e}"
+            )
+
+        return JSONResponse({"ok": True, "filename": filename})
 
     return router

@@ -27,6 +27,7 @@ system_config:
     # 额外指导 LLM 如何使用工具的提示词
     # tool_guidance_prompt: 'tool_guidance_prompt' 
 
+
 # 默认角色的配置
 character_config:
   conf_name: 'mao_pro' # 角色配置文件的名称
@@ -464,7 +465,7 @@ character_config:
     remove_special_char: True # 从音频生成中删除表情符号等特殊字符
     ignore_brackets: True # 从音频生成中删除中括号包住的内容
     ignore_parentheses: True # 从音频生成中删除括号包住的内容
-    ignore_asterisks: True # 从音频生成中删除星号包住的内容(单双星号)
+    ignore_asterisks: True # 从音频生成中删除星号标记(单双/三连星号)，但保留星号包住的文字
     ignore_angle_brackets: True # 从音频生成中删除尖括号包住的内容
 
     translator_config:

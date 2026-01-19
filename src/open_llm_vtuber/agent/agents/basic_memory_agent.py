@@ -233,6 +233,11 @@ class BasicMemoryAgent(AgentInterface):
                 message_parts.append(
                     f"[User shared content from clipboard: {text_data.content}]"
                 )
+            elif text_data.source == TextSource.DAILY_SCHEDULE:
+                message_parts.insert(
+                    0,  # Insert at the beginning as context
+                    f"[User's daily schedule:\n{text_data.content}]",
+                )
 
         if input_data.images:
             message_parts.append("\n[User has also provided images]")

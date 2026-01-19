@@ -56,6 +56,7 @@ class WSMessage(TypedDict, total=False):
     history_uid: Optional[str]
     file: Optional[str]
     display_text: Optional[dict]
+    daily_schedule: Optional[str]
 
 
 class WebSocketHandler:

@@ -31,6 +31,7 @@ async def handle_conversation_trigger(
 ) -> None:
     """Handle triggers that start a conversation"""
     metadata = None
+    daily_schedule = data.get("daily_schedule")
 
     if msg_type == "ai-speak-signal":
         try:
@@ -70,6 +71,12 @@ async def handle_conversation_trigger(
 
     images = data.get("images")
     session_emoji = np.random.choice(EMOJI_LIST)
+
+    # Pass daily_schedule to metadata for context injection
+    if daily_schedule:
+        if metadata is None:
+            metadata = {}
+        metadata["daily_schedule"] = daily_schedule
 
     group = chat_group_manager.get_client_group(client_uid)
     if group and len(group.members) > 1:
