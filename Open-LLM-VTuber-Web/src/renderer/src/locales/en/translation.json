@@ -149,6 +149,32 @@
   "dailyLife": {
     "title": "Daily Life",
     "addItemPlaceholder": "Add a new task...",
+    "repeatLabel": "Repeat",
+    "repeats": "Repeats",
+    "repeat": {
+      "none": "No repeat",
+      "daily": "Daily",
+      "everyOtherDay": "Every other day",
+      "weekday": "Weekdays",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "customWeekly": "Custom (days)",
+      "everyNDays": "Every N days",
+      "everyNWeeks": "Every N weeks"
+    },
+    "intervalLabel": "Interval",
+    "days": "days",
+    "weeks": "weeks",
+    "selectWeekdays": "Days",
+    "weekdays": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
     "noItems": "No tasks for today",
     "addFirstTask": "Add your first task above",
     "totalTasks": "Total Tasks",
@@ -172,6 +198,11 @@
     "scheduleTitle": "Daily schedule ({{date}}):",
     "scheduleTodoLine": "TODO ({{count}}): {{items}}",
     "scheduleDoneLine": "DONE ({{count}}): {{items}}"
+    ,
+    "deletedOccurrence": "Deleted for today",
+    "stoppedRepeating": "Stopped repeating",
+    "deleteRecurringHint": "Click: delete today only. Shift+Click: stop repeating.",
+    "deleteOneHint": "Delete task"
   },
   "notification": {
     "characterLoaded": "New Character Loaded",

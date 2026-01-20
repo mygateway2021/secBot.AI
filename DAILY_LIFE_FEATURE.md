@@ -83,8 +83,13 @@ const [dailyLifeOpen, setDailyLifeOpen] = useState(false);
 - Header: "Today's Schedule" with current date
 - Todo list with checkboxes
 - "Add Item" input field
+- Repeat options (including custom weekdays and intervals)
 - "Clear Completed" button
 - "Add to Chat" toggle/button (see options below)
+
+**Recurring delete behavior**:
+- For recurring items, clicking the trash icon deletes *today's occurrence only* (it will not come back on reload).
+- Shift+clicking the trash icon stops the recurrence entirely.
 
 **Data Structure**:
 ```typescript
@@ -93,6 +98,25 @@ interface TodoItem {
   text: string;
   completed: boolean;
   timestamp: number;
+  // Optional recurrence settings (offline-only)
+  repeat?:
+    | 'none'
+    | 'daily'
+    | 'every_other_day'
+    | 'weekday'
+    | 'weekly'
+    | 'monthly'
+    | 'weekly_days'        // custom weekdays
+    | 'interval_days'      // every N days
+    | 'interval_weeks';    // every N weeks
+
+  // Extra repeat configuration when using advanced patterns
+  repeat_config?: {
+    interval?: number;    // for interval_days / interval_weeks
+    weekdays?: number[];  // 0=Sun..6=Sat for weekly_days / interval_weeks
+  };
+  // When set, this item is an instance generated from a recurring template
+  recurring_id?: string;
 }
 
 interface DailySchedule {
@@ -105,6 +129,9 @@ interface DailySchedule {
 ```typescript
 // Use localStorage with date-based keys
 const STORAGE_KEY_PREFIX = 'daily_schedule_';
+
+// Recurring templates are stored separately and expanded into each day
+const RECURRING_STORAGE_KEY = 'daily_life_recurring_todos';
 
 const saveDailySchedule = (date: string, items: TodoItem[]) => {
   localStorage.setItem(

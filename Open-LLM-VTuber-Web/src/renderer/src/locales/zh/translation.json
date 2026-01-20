@@ -146,6 +146,32 @@
   "dailyLife": {
     "title": "日常生活",
     "addItemPlaceholder": "添加新任务...",
+    "repeatLabel": "重复",
+    "repeats": "重复",
+    "repeat": {
+      "none": "不重复",
+      "daily": "每天",
+      "everyOtherDay": "隔天",
+      "weekday": "工作日",
+      "weekly": "每周",
+      "monthly": "每月",
+      "customWeekly": "自定义（按星期）",
+      "everyNDays": "每隔N天",
+      "everyNWeeks": "每隔N周"
+    },
+    "intervalLabel": "间隔",
+    "days": "天",
+    "weeks": "周",
+    "selectWeekdays": "星期",
+    "weekdays": {
+      "sun": "日",
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六"
+    },
     "noItems": "今日无安排",
     "addFirstTask": "在上方添加您的第一个任务",
     "totalTasks": "总任务数",
@@ -169,6 +195,11 @@
     "scheduleTitle": "每日计划（{{date}}）：",
     "scheduleTodoLine": "待办（{{count}}）：{{items}}",
     "scheduleDoneLine": "已完成（{{count}}）：{{items}}"
+    ,
+    "deletedOccurrence": "已删除今日这次",
+    "stoppedRepeating": "已停止重复",
+    "deleteRecurringHint": "点击：仅删除今天。Shift+点击：停止重复。",
+    "deleteOneHint": "删除任务"
   },
   "notification": {
     "characterLoaded": "新角色已加载",
