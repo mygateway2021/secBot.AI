@@ -9,6 +9,10 @@ export interface TodoItem {
   repeat?: RepeatPattern;
   repeat_config?: RepeatConfig;
   recurring_id?: string;
+  // Pomodoro timer fields
+  pomodoro_duration?: number; // in milliseconds, default 25 minutes
+  pomodoro_start_time?: number; // timestamp when timer started
+  time_spent?: number; // total time spent on task in milliseconds
 }
 
 export type RepeatPattern =
@@ -366,6 +370,17 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
     saveTodos([]);
   }, [saveTodos]);
 
+  // Update todo timer information
+  const updateTodoTimer = useCallback(async (
+    id: string,
+    updates: Partial<Pick<TodoItem, 'pomodoro_start_time' | 'pomodoro_duration' | 'time_spent'>>
+  ) => {
+    const newTodos = todos.map(todo =>
+      todo.id === id ? { ...todo, ...updates } : todo
+    );
+    saveTodos(newTodos);
+  }, [todos, saveTodos]);
+
   // Format schedule for chat
   const formatScheduleForChat = useCallback((): string => {
     if (todos.length === 0) return '';
@@ -375,8 +390,19 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
     const done = limitedTodos.filter((t) => t.completed);
 
     const clipText = (text: string) => text.slice(0, MAX_ITEM_LENGTH).trim();
-    const separator = i18n.language?.toLowerCase().startsWith('zh') ? '；' : '; ';
-    const joinItems = (items: TodoItem[]) => items.map((t) => clipText(t.text)).join(separator);
+    const isZh = i18n.language?.toLowerCase().startsWith('zh');
+    const formatTime = (ms: number): string => {
+      if (!ms || ms < 1000) return ''; // Less than 1 second, don't show
+      const minutes = Math.ceil(ms / 60000); // Round up to nearest minute
+      if (isZh) {
+        return ` (${minutes}分钟)`;
+      }
+      return ` (${minutes}min)`;
+    };
+    const separator = isZh ? '；' : '; ';
+    const joinItems = (items: TodoItem[]) => items.map((t) => 
+      clipText(t.text) + (t.time_spent ? formatTime(t.time_spent) : '')
+    ).join(separator);
 
     const date = getCurrentDate();
     const lines: string[] = [t('dailyLife.scheduleTitle', { date })];
@@ -421,6 +447,7 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
     deleteTodo,
     clearCompleted,
     clearAll,
+    updateTodoTimer,
     formatScheduleForChat,
     reload: loadTodosForToday,
     stats,

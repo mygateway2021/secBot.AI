@@ -138,10 +138,13 @@
     "prevPage": "上一页",
     "nextPage": "下一页",
     "editDiary": "编辑",
+    "printDiary": "打印",
     "deleteDiary": "删除",
     "save": "保存",
     "cancel": "取消",
-    "confirmDeleteDiary": "确定删除这条日记吗？"
+    "confirmDeleteDiary": "确定删除这条日记吗？",
+    "diaryTitle": "{{characterName}}的日记",
+    "diaryDate": "日期"
   },
   "dailyLife": {
     "title": "日常生活",
@@ -162,6 +165,8 @@
     "intervalLabel": "间隔",
     "days": "天",
     "weeks": "周",
+    "minutes": "分钟",
+    "pomodoroDuration": "计时器时长",
     "selectWeekdays": "星期",
     "weekdays": {
       "sun": "日",
@@ -194,12 +199,25 @@
     "autoMessage": "这是我今天的日程安排。您能帮我规划一下吗？",
     "scheduleTitle": "每日计划（{{date}}）：",
     "scheduleTodoLine": "待办（{{count}}）：{{items}}",
-    "scheduleDoneLine": "已完成（{{count}}）：{{items}}"
-    ,
+    "scheduleDoneLine": "已完成（{{count}}）：{{items}}",
     "deletedOccurrence": "已删除今日这次",
     "stoppedRepeating": "已停止重复",
     "deleteRecurringHint": "点击：仅删除今天。Shift+点击：停止重复。",
-    "deleteOneHint": "删除任务"
+    "deleteOneHint": "删除任务",
+    "startTimer": "开始计时",
+    "pauseTimer": "暂停计时",
+    "resumeTimer": "继续计时",
+    "stopTimer": "停止计时",
+    "startPomodoro": "开始番茄钟计时（25分钟）",
+    "timerStarted": "计时器已启动",
+    "timerPaused": "计时器已暂停",
+    "timerResumed": "计时器已继续",
+    "timerStopped": "计时器已停止",
+    "pomodoroStarted": "{{minutes}}分钟番茄钟已开始",
+    "pomodoroComplete": "番茄钟完成！🎉",
+    "taskMarkedDone": "任务已标记为完成",
+    "timeSpentRecorded": "已记录花费的时间",
+    "timeSpent": "耗时"
   },
   "notification": {
     "characterLoaded": "新角色已加载",

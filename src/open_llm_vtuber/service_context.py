@@ -499,12 +499,22 @@ class ServiceContext:
                 if not file_path.startswith(characters_dir):
                     raise ValueError("Invalid configuration file path")
 
-                alt_config_data = read_yaml(file_path).get("character_config")
+                alt_config_data = read_yaml(file_path).get("character_config") or {}
 
                 # Start with original config data and perform a deep merge
                 new_character_config_data = deep_merge(
                     self.config.character_config.model_dump(), alt_config_data
                 )
+
+                # If the alt config does not specify `character_name`, do not keep the
+                # previous/base character_name (which can leak across presets). Default
+                # it to the new `conf_name` for a consistent display name.
+                if not (alt_config_data.get("character_name") or "").strip():
+                    inferred_name = (
+                        new_character_config_data.get("conf_name") or ""
+                    ).strip()
+                    if inferred_name:
+                        new_character_config_data["character_name"] = inferred_name
 
             if new_character_config_data:
                 new_config = {

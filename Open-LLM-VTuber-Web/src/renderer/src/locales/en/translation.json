@@ -141,10 +141,13 @@
     "prevPage": "Prev",
     "nextPage": "Next",
     "editDiary": "Edit",
+    "printDiary": "Print",
     "deleteDiary": "Delete",
     "save": "Save",
     "cancel": "Cancel",
-    "confirmDeleteDiary": "Delete this diary entry?"
+    "confirmDeleteDiary": "Delete this diary entry?",
+    "diaryTitle": "{{characterName}}'s Diary",
+    "diaryDate": "Date"
   },
   "dailyLife": {
     "title": "Daily Life",
@@ -165,6 +168,8 @@
     "intervalLabel": "Interval",
     "days": "days",
     "weeks": "weeks",
+    "minutes": "minutes",
+    "pomodoroDuration": "Timer Duration",
     "selectWeekdays": "Days",
     "weekdays": {
       "sun": "Sun",
@@ -197,12 +202,25 @@
     "autoMessage": "Here's my schedule for today. Can you help me organize my day?",
     "scheduleTitle": "Daily schedule ({{date}}):",
     "scheduleTodoLine": "TODO ({{count}}): {{items}}",
-    "scheduleDoneLine": "DONE ({{count}}): {{items}}"
-    ,
+    "scheduleDoneLine": "DONE ({{count}}): {{items}}",
     "deletedOccurrence": "Deleted for today",
     "stoppedRepeating": "Stopped repeating",
     "deleteRecurringHint": "Click: delete today only. Shift+Click: stop repeating.",
-    "deleteOneHint": "Delete task"
+    "deleteOneHint": "Delete task",
+    "startTimer": "Start timer",
+    "pauseTimer": "Pause timer",
+    "resumeTimer": "Resume timer",
+    "stopTimer": "Stop timer",
+    "startPomodoro": "Start Pomodoro timer (25 min)",
+    "timerStarted": "Timer started",
+    "timerPaused": "Timer paused",
+    "timerResumed": "Timer resumed",
+    "timerStopped": "Timer stopped",
+    "pomodoroStarted": "{{minutes}} min Pomodoro started",
+    "pomodoroComplete": "Pomodoro complete! 🎉",
+    "taskMarkedDone": "Task marked as done",
+    "timeSpentRecorded": "Time spent has been recorded",
+    "timeSpent": "Time spent"
   },
   "notification": {
     "characterLoaded": "New Character Loaded",

@@ -7,7 +7,9 @@ import {
   Tabs,
   VStack,
 } from '@chakra-ui/react';
-import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPrinter } from 'react-icons/fi';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { formatDistanceToNow } from 'date-fns';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -191,6 +193,131 @@ function HistoryDrawer({ children }: HistoryDrawerProps): JSX.Element {
     setTab('dairy');
   };
 
+  const handlePrintDiary = (diaryEntry: { uid: string; content: string; created_at: string; character_name: string }) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const diaryTitle = t('history.diaryTitle', { characterName: diaryEntry.character_name });
+    const dateLabel = t('history.diaryDate');
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Diary Entry - ${diaryEntry.uid}</title>
+          <style>
+            @media print {
+              body { margin: 0; padding: 20mm; }
+              @page { size: A4; margin: 0; }
+            }
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            h1, h2, h3, h4, h5, h6 {
+              margin-top: 1.5em;
+              margin-bottom: 0.5em;
+              font-weight: 600;
+            }
+            h1 { font-size: 2em; border-bottom: 2px solid #333; padding-bottom: 0.3em; }
+            h2 { font-size: 1.5em; border-bottom: 1px solid #ccc; padding-bottom: 0.3em; }
+            h3 { font-size: 1.25em; }
+            p { margin: 0.8em 0; }
+            ul, ol { margin: 0.8em 0; padding-left: 2em; }
+            li { margin: 0.3em 0; }
+            code {
+              background-color: #f4f4f4;
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-family: 'Courier New', monospace;
+            }
+            pre {
+              background-color: #f4f4f4;
+              padding: 1em;
+              border-radius: 5px;
+              overflow-x: auto;
+            }
+            blockquote {
+              border-left: 4px solid #ccc;
+              margin: 1em 0;
+              padding-left: 1em;
+              color: #666;
+            }
+            strong { font-weight: 600; }
+            em { font-style: italic; }
+            .header {
+              text-align: center;
+              margin-bottom: 2em;
+              padding-bottom: 1em;
+              border-bottom: 2px solid #333;
+            }
+            .metadata {
+              color: #666;
+              font-size: 0.9em;
+              margin-bottom: 1em;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${diaryTitle}</h1>
+            <div class="metadata">
+              <p>${dateLabel}: ${diaryEntry.created_at ? new Date(diaryEntry.created_at).toLocaleString() : 'Unknown'}</p>
+            </div>
+          </div>
+          <div class="content">
+            ${convertMarkdownToHTML(diaryEntry.content)}
+          </div>
+          <script>
+            window.onload = () => {
+              window.print();
+              setTimeout(() => window.close(), 100);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
+  // Simple markdown to HTML converter for printing
+  const convertMarkdownToHTML = (markdown: string): string => {
+    let html = markdown;
+    
+    // Headers
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    // Lists
+    html = html.replace(/^\* (.+)$/gim, '<li>$1</li>');
+    html = html.replace(/^- (.+)$/gim, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    
+    // Paragraphs
+    html = html.split('\n\n').map(para => {
+      if (!para.startsWith('<') && para.trim()) {
+        return `<p>${para}</p>`;
+      }
+      return para;
+    }).join('\n');
+    
+    return html;
+  };
+
   const startEdit = (confUid: string, uid: string, content: string) => {
     setEditingUid(uid);
     setEditingConfUid(confUid);
@@ -327,6 +454,14 @@ function HistoryDrawer({ children }: HistoryDrawerProps): JSX.Element {
                               <Button
                                 size="xs"
                                 variant="ghost"
+                                onClick={() => handlePrintDiary(d)}
+                                title={t('history.printDiary')}
+                              >
+                                <FiPrinter />
+                              </Button>
+                              <Button
+                                size="xs"
+                                variant="ghost"
                                 onClick={() => startEdit(d.conf_uid, d.uid, d.content)}
                               >
                                 <FiEdit2 />
@@ -364,9 +499,44 @@ function HistoryDrawer({ children }: HistoryDrawerProps): JSX.Element {
                               </HStack>
                             </Box>
                           ) : (
-                            <Text fontSize="sm" color="white" whiteSpace="pre-wrap">
-                              {d.content}
-                            </Text>
+                            <Box
+                              fontSize="sm"
+                              color="white"
+                              sx={{
+                                '& h1': { fontSize: '1.5em', fontWeight: 'bold', mt: 4, mb: 2 },
+                                '& h2': { fontSize: '1.3em', fontWeight: 'bold', mt: 3, mb: 2 },
+                                '& h3': { fontSize: '1.1em', fontWeight: 'bold', mt: 2, mb: 1 },
+                                '& p': { mb: 2 },
+                                '& ul, & ol': { ml: 4, mb: 2 },
+                                '& li': { mb: 1 },
+                                '& strong': { fontWeight: 'bold' },
+                                '& em': { fontStyle: 'italic' },
+                                '& code': {
+                                  bg: 'whiteAlpha.200',
+                                  px: 1,
+                                  py: 0.5,
+                                  borderRadius: 'sm',
+                                  fontSize: '0.9em',
+                                },
+                                '& pre': {
+                                  bg: 'whiteAlpha.100',
+                                  p: 3,
+                                  borderRadius: 'md',
+                                  overflowX: 'auto',
+                                },
+                                '& blockquote': {
+                                  borderLeft: '4px solid',
+                                  borderColor: 'whiteAlpha.400',
+                                  pl: 3,
+                                  py: 1,
+                                  color: 'whiteAlpha.800',
+                                },
+                              }}
+                            >
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {d.content}
+                              </ReactMarkdown>
+                            </Box>
                           )}
                         </Box>
                       ))}
