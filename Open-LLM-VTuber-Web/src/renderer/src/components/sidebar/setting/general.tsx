@@ -131,7 +131,8 @@ function General({ onSave, onCancel }: GeneralProps): JSX.Element {
         throw new Error(text || `HTTP ${resp.status}`);
       }
       const data = await resp.json() as { content?: string };
-      setYamlDraft(data.content ?? '');
+      const content = data.content ?? '';
+      setYamlDraft(content);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       toaster.create({

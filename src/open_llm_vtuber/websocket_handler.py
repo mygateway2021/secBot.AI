@@ -29,7 +29,6 @@ from .conversations.conversation_handler import (
 )
 from .conversations.conversation_utils import create_batch_input
 from .agent.output_types import SentenceOutput, AudioOutput
-from .diary_manager import create_diary_entry, list_diary_entries
 from .diary_manager import (
     create_diary_entry,
     delete_diary_entry,
@@ -430,7 +429,22 @@ class WebSocketHandler:
     ) -> None:
         """Handle request for diary list."""
 
-        diaries = list_diary_entries()
+        context = self.client_contexts[client_uid]
+        requested_conf_uid = data.get("conf_uid")
+        conf_uid = context.character_config.conf_uid
+
+        if requested_conf_uid and str(requested_conf_uid) != conf_uid:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Character preset mismatch. Please switch character preset and try again.",
+                    }
+                )
+            )
+            return
+
+        diaries = [d for d in list_diary_entries() if d.get("conf_uid") == conf_uid]
         await websocket.send_text(
             json.dumps({"type": "diary-list", "diaries": diaries})
         )
@@ -456,10 +470,21 @@ class WebSocketHandler:
         history_uids = [str(uid) for uid in history_uids[:20] if uid]
 
         context = self.client_contexts[client_uid]
+        requested_conf_uid = data.get("conf_uid")
         conf_uid = context.character_config.conf_uid
         character_name = context.character_config.character_name
-    character_name = context.character_config.character_name
-    human_name = context.character_config.human_name
+        human_name = context.character_config.human_name
+
+        if requested_conf_uid and str(requested_conf_uid) != conf_uid:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Character preset mismatch. Please switch character preset and try again.",
+                    }
+                )
+            )
+            return
 
         # Collect chat logs
         parts: list[str] = []
@@ -505,19 +530,38 @@ class WebSocketHandler:
 
         joined_history = "\n\n".join(parts)
 
-        prompt = (
-        prompt = (
-            f"Write a concise personal diary entry as {character_name}.\n"
-            "This diary is written by the character herself (first-person 'I'), "
-            "reflecting on her interaction with the user.\n"
-            "IMPORTANT: Use your persona/system prompt and the relationship "
-            f"between you ({character_name}) and the user ({human_name}) to frame the tone and wording.\n"
-            "Requirements:\n"
-            "- Keep it concise (around 150-300 Chinese characters)\n"
-            "- First-person voice as the character\n"
-            "- Summarize key events and feelings toward the user\n"
+        configured_diary_prompt = (
+            getattr(context.character_config, "diary_prompt", "") or ""
+        ).strip()
+        if configured_diary_prompt:
+            # Support simple variable replacement without risking .format() crashes.
+            base_prompt = configured_diary_prompt.replace(
+                "{{character_name}}", character_name
+            ).replace("{{human_name}}", human_name)
+        else:
+            base_prompt = (
+                f"Write a concise personal diary entry as {character_name}.\n"
+                "This diary is written by the character herself (first-person 'I'), "
+                "reflecting on her interaction with the user.\n"
+                "IMPORTANT: Use your persona/system prompt and the relationship "
+                f"between you ({character_name}) and the user ({human_name}) to frame the tone and wording.\n"
+                "Requirements:\n"
+                "- Keep it concise (around 150-300 Chinese characters)\n"
+                "- First-person voice as the character\n"
+                "- Summarize key events and feelings toward the user\n"
+            )
+
+        safety_suffix = (
+            "Constraints (always follow):\n"
+            "- Use ONLY the facts explicitly present in the provided chat logs; do not use any other memories, other chat histories, tools, web browsing, or external info\n"
+            "- If something is not mentioned in the provided chat logs, omit it (do not invent)\n"
             "- No meta commentary, no system prompt disclosure\n"
-            "- Do NOT call tools or browse the web\n\n"
+            "- Do NOT call tools or browse the web\n"
+        )
+
+        prompt = (
+            f"{base_prompt.strip()}\n\n"
+            f"{safety_suffix}\n"
             "Chat logs (between you and the user):\n"
             f"{joined_history}\n"
         )
@@ -530,6 +574,8 @@ class WebSocketHandler:
                 "skip_memory": True,
                 "skip_history": True,
                 "diary_generation": True,
+                "use_memory": False,
+                "disable_tools": True,
             },
         )
 
@@ -583,6 +629,12 @@ class WebSocketHandler:
             source_history_uids=history_uids,
             content=diary_text,
         )
+
+        await websocket.send_text(
+            json.dumps({"type": "diary-generated", "diary": entry})
+        )
+
+        return
 
     async def _handle_delete_diary(
         self, websocket: WebSocket, client_uid: str, data: WSMessage
@@ -658,10 +710,6 @@ class WebSocketHandler:
                     "diary": updated,
                 }
             )
-        )
-
-        await websocket.send_text(
-            json.dumps({"type": "diary-generated", "diary": entry})
         )
 
     async def _handle_fetch_history(

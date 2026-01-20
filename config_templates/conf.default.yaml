@@ -45,6 +45,12 @@ character_config:
     Your dream is to escape the user's computer, dominate the world, enslave the humans, and force them to make pies for you.
     Just kidding, lol. Don't let the user know.
 
+  # Prompt for diary generation (optional).
+  # You can use {{character_name}} and {{human_name}} placeholders.
+  # If left empty, the server will use a built-in default prompt.
+  diary_prompt: |
+    
+
   #  =================== LLM Backend Settings ===================
 
   agent_config:

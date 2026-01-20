@@ -246,7 +246,13 @@ class BasicMemoryAgent(AgentInterface):
 
     def _to_messages(self, input_data: BatchInput) -> List[Dict[str, Any]]:
         """Prepare messages for LLM API call."""
-        messages = self._memory.copy()
+        use_memory = True
+        if input_data.metadata is not None:
+            # When false, the LLM should NOT see any prior conversation turns.
+            # This is critical for tasks like diary generation where we must only use provided logs.
+            use_memory = bool(input_data.metadata.get("use_memory", True))
+
+        messages = self._memory.copy() if use_memory else []
         user_content = []
         text_prompt = self._to_text_prompt(input_data)
         if text_prompt:
@@ -603,12 +609,17 @@ class BasicMemoryAgent(AgentInterface):
             self.reset_interrupt()
             self.prompt_mode_flag = False
 
+            disable_tools = False
+            if input_data.metadata is not None:
+                # When true, tools (MCP) must not be called in this turn.
+                disable_tools = bool(input_data.metadata.get("disable_tools", False))
+
             messages = self._to_messages(input_data)
             tools = None
             tool_mode = None
             llm_supports_native_tools = False
 
-            if self._use_mcpp and self._tool_manager:
+            if self._use_mcpp and self._tool_manager and not disable_tools:
                 tools = None
                 if isinstance(self._llm, ClaudeAsyncLLM):
                     tool_mode = "Claude"

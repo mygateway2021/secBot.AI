@@ -14,6 +14,7 @@ from .websocket_handler import WebSocketHandler
 from .proxy_handler import ProxyHandler
 from .config_manager.utils import (
     load_text_file_with_guess_encoding,
+    read_yaml,
     validate_config,
 )
 import yaml
@@ -94,6 +95,31 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
         """Request body for updating a character config YAML file."""
 
         content: str
+
+    def _deep_merge_dicts(base: dict, overrides: dict) -> dict:
+        """Recursively merge two dictionaries.
+
+        Values from `overrides` take precedence. Nested dictionaries are merged.
+
+        Args:
+            base: Base dictionary.
+            overrides: Dictionary with overriding values.
+
+        Returns:
+            A new dictionary with merged values.
+        """
+
+        result = dict(base)
+        for key, value in overrides.items():
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
+                result[key] = _deep_merge_dicts(result[key], value)
+            else:
+                result[key] = value
+        return result
 
     def _resolve_character_config_path(filename: str) -> Path:
         """Resolve a character config filename to a safe on-disk path.
@@ -318,8 +344,63 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
                 status_code=400, detail="YAML root must be a mapping/object"
             )
 
+        # NOTE:
+        # - conf.yaml is the full application config and must fully validate.
+        # - character preset YAMLs in `characters/` are intentionally partial overrides
+        #   (Options unset remain unchanged when switching character).
+        #   Validate them by merging with base conf.yaml's character_config.
+        if filename == "conf.yaml":
+            config_to_validate = parsed
+        else:
+            base_config = read_yaml("conf.yaml")
+            if not isinstance(base_config, dict):
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to load base conf.yaml for validation",
+                )
+
+            alt_character_config = parsed.get("character_config")
+            if not isinstance(alt_character_config, dict):
+                raise HTTPException(
+                    status_code=400,
+                    detail="character_config must be a mapping/object",
+                )
+
+            base_character_config = base_config.get("character_config")
+            if not isinstance(base_character_config, dict):
+                raise HTTPException(
+                    status_code=500,
+                    detail="Base conf.yaml is missing character_config",
+                )
+
+            merged_character_config = _deep_merge_dicts(
+                base_character_config, alt_character_config
+            )
+
+            # Validate using the merged full character_config, but keep the stored
+            # preset YAML as the user's lightweight overrides.
+            #
+            # Important: only include optional top-level sections when they are
+            # present as mappings. Passing explicit `None` would override Pydantic
+            # defaults and fail validation (e.g. daily_life).
+            config_to_validate: dict = {
+                "character_config": merged_character_config,
+            }
+
+            system_config = base_config.get("system_config")
+            if isinstance(system_config, dict):
+                config_to_validate["system_config"] = system_config
+
+            live_config = base_config.get("live_config")
+            if isinstance(live_config, dict):
+                config_to_validate["live_config"] = live_config
+
+            daily_life = base_config.get("daily_life")
+            if isinstance(daily_life, dict):
+                config_to_validate["daily_life"] = daily_life
+
         try:
-            validate_config(parsed)
+            validate_config(config_to_validate)
         except Exception as e:
             # Return a readable error to the UI; avoid leaking stack traces.
             raise HTTPException(

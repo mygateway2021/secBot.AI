@@ -20,6 +20,7 @@ class CharacterConfig(I18nMixin):
     human_name: str = Field(default="Human", alias="human_name")
     avatar: str = Field(default="", alias="avatar")
     persona_prompt: str = Field(..., alias="persona_prompt")
+    diary_prompt: str = Field(default="", alias="diary_prompt")
     agent_config: AgentConfig = Field(..., alias="agent_config")
     asr_config: ASRConfig = Field(..., alias="asr_config")
     tts_config: TTSConfig = Field(..., alias="tts_config")
@@ -44,6 +45,13 @@ class CharacterConfig(I18nMixin):
         ),
         "persona_prompt": Description(
             en="Persona prompt. The persona of your character.", zh="角色人设提示词"
+        ),
+        "diary_prompt": Description(
+            en=(
+                "Prompt used for diary generation for this character. "
+                "If empty, a built-in default prompt will be used."
+            ),
+            zh=("用于该角色生成日记的提示词。留空则使用内置默认提示词。"),
         ),
         "agent_config": Description(
             en="Configuration for the conversation agent", zh="对话代理配置"
