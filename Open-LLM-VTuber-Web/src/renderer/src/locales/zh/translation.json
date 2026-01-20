@@ -130,7 +130,15 @@
   },
   "history": {
     "chatHistoryList": "聊天历史列表",
-    "noMessages": "暂无消息"
+    "noMessages": "暂无消息",
+    "historyTab": "历史",
+    "dairyTab": "dairy",
+    "generateDiary": "生成日记",
+    "editDiary": "编辑",
+    "deleteDiary": "删除",
+    "save": "保存",
+    "cancel": "取消",
+    "confirmDeleteDiary": "确定删除这条日记吗？"
   },
   "dailyLife": {
     "title": "日常生活",
@@ -166,7 +174,10 @@
     "newConversation": "新对话已开始",
     "newChatHistory": "新聊天历史已创建",
     "historyDeleteSuccess": "历史记录删除成功",
-    "historyDeleteFail": "删除历史记录失败"
+    "historyDeleteFail": "删除历史记录失败",
+    "diaryGenerated": "日记已生成",
+    "diaryUpdated": "日记已更新",
+    "diaryDeleted": "日记已删除"
   },
   "error": {
     "cameraApiNotSupported": "此设备不支持摄像头API",
@@ -182,6 +193,7 @@
     "failedCapture": "捕获{{source}}帧失败",
     "failedParseWebSocket": "解析WebSocket消息失败",
     "websocketNotOpen": "WebSocket未连接",
+    "diaryDeleteFail": "删除日记失败",
     "vadMisfire": "检测到语音但过于简短，请尝试提高音量或说得更久一些，或调整识别设置（降低语音识别阈值、降低负面语音阈值、减少验证帧数）"
   },
   "aiState": {

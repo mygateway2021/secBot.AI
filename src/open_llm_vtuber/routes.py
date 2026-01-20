@@ -5,7 +5,6 @@ from uuid import uuid4
 import numpy as np
 from datetime import datetime
 from fastapi import APIRouter, WebSocket, UploadFile, File, Response, HTTPException
-from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from starlette.responses import JSONResponse
 from starlette.websockets import WebSocketDisconnect

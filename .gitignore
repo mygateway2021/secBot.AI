@@ -18,6 +18,8 @@ conf.yaml
 # ignore avatars
 avatars/*
 
+diary/
+
 # macOS system files
 .DS_Store
 

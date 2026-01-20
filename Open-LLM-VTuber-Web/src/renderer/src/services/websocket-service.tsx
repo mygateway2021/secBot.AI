@@ -6,6 +6,7 @@ import { ModelInfo } from '@/context/live2d-config-context';
 import { HistoryInfo } from '@/context/websocket-context';
 import { ConfigFile } from '@/context/character-config-context';
 import { toaster } from '@/components/ui/toaster';
+import { DiaryEntry } from '@/context/diary-context';
 
 export interface DisplayText {
   text: string;
@@ -70,8 +71,13 @@ export interface MessageEvent {
   history_uid?: string;
   success?: boolean;
   histories?: HistoryInfo[];
+  diaries?: DiaryEntry[];
+  diary?: DiaryEntry;
+  diary_uid?: string;
+  conf_uid?: string;
   configs?: ConfigFile[];
   message?: string;
+  success?: boolean;
   members?: string[];
   is_owner?: boolean;
   client_uid?: string;

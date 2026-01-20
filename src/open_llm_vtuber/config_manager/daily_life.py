@@ -6,7 +6,7 @@ selection between offline (local) todo lists and online Microsoft To Do syncing.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from .i18n import Description, I18nMixin
 

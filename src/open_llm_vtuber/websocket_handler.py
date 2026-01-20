@@ -27,6 +27,15 @@ from .conversations.conversation_handler import (
     handle_group_interrupt,
     handle_individual_interrupt,
 )
+from .conversations.conversation_utils import create_batch_input
+from .agent.output_types import SentenceOutput, AudioOutput
+from .diary_manager import create_diary_entry, list_diary_entries
+from .diary_manager import (
+    create_diary_entry,
+    delete_diary_entry,
+    list_diary_entries,
+    update_diary_entry,
+)
 
 
 class MessageType(Enum):
@@ -38,6 +47,12 @@ class MessageType(Enum):
         "fetch-and-set-history",
         "create-new-history",
         "delete-history",
+    ]
+    DIARY = [
+        "fetch-diary-list",
+        "generate-diary",
+        "delete-diary",
+        "update-diary",
     ]
     CONVERSATION = ["mic-audio-end", "text-input", "ai-speak-signal"]
     CONFIG = ["fetch-configs", "switch-config"]
@@ -54,6 +69,10 @@ class WSMessage(TypedDict, total=False):
     audio: Optional[List[float]]
     images: Optional[List[str]]
     history_uid: Optional[str]
+    history_uids: Optional[List[str]]
+    diary_uid: Optional[str]
+    conf_uid: Optional[str]
+    content: Optional[str]
     file: Optional[str]
     display_text: Optional[dict]
     daily_schedule: Optional[str]
@@ -84,6 +103,10 @@ class WebSocketHandler:
             "fetch-and-set-history": self._handle_fetch_history,
             "create-new-history": self._handle_create_history,
             "delete-history": self._handle_delete_history,
+            "fetch-diary-list": self._handle_diary_list_request,
+            "generate-diary": self._handle_generate_diary,
+            "delete-diary": self._handle_delete_diary,
+            "update-diary": self._handle_update_diary,
             "interrupt-signal": self._handle_interrupt,
             "mic-audio-data": self._handle_audio_data,
             "mic-audio-end": self._handle_conversation_trigger,
@@ -400,6 +423,245 @@ class WebSocketHandler:
         histories = get_history_list(context.character_config.conf_uid)
         await websocket.send_text(
             json.dumps({"type": "history-list", "histories": histories})
+        )
+
+    async def _handle_diary_list_request(
+        self, websocket: WebSocket, client_uid: str, data: WSMessage
+    ) -> None:
+        """Handle request for diary list."""
+
+        diaries = list_diary_entries()
+        await websocket.send_text(
+            json.dumps({"type": "diary-list", "diaries": diaries})
+        )
+
+    async def _handle_generate_diary(
+        self, websocket: WebSocket, client_uid: str, data: WSMessage
+    ) -> None:
+        """Generate a concise diary from selected chat histories."""
+
+        history_uids = data.get("history_uids") or []
+        if not isinstance(history_uids, list) or not history_uids:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Missing history_uids for diary generation",
+                    }
+                )
+            )
+            return
+
+        # Basic safety limits
+        history_uids = [str(uid) for uid in history_uids[:20] if uid]
+
+        context = self.client_contexts[client_uid]
+        conf_uid = context.character_config.conf_uid
+        character_name = context.character_config.character_name
+    character_name = context.character_config.character_name
+    human_name = context.character_config.human_name
+
+        # Collect chat logs
+        parts: list[str] = []
+        for uid in history_uids:
+            msgs = [
+                msg
+                for msg in get_history(conf_uid, uid)
+                if msg.get("role") in {"human", "ai"}
+            ]
+            if not msgs:
+                continue
+
+            # Keep the prompt size bounded
+            msgs = msgs[-60:]
+            lines = []
+            for m in msgs:
+                role = "User" if m.get("role") == "human" else character_name
+                content = (m.get("content") or "").strip()
+                if not content:
+                    continue
+                lines.append(f"[{m.get('timestamp', '')}] {role}: {content}")
+
+            if lines:
+                parts.append(
+                    "\n".join(
+                        [
+                            f"=== Chat History {uid} ===",
+                            *lines,
+                        ]
+                    )
+                )
+
+        if not parts:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Selected histories are empty",
+                    }
+                )
+            )
+            return
+
+        joined_history = "\n\n".join(parts)
+
+        prompt = (
+        prompt = (
+            f"Write a concise personal diary entry as {character_name}.\n"
+            "This diary is written by the character herself (first-person 'I'), "
+            "reflecting on her interaction with the user.\n"
+            "IMPORTANT: Use your persona/system prompt and the relationship "
+            f"between you ({character_name}) and the user ({human_name}) to frame the tone and wording.\n"
+            "Requirements:\n"
+            "- Keep it concise (around 150-300 Chinese characters)\n"
+            "- First-person voice as the character\n"
+            "- Summarize key events and feelings toward the user\n"
+            "- No meta commentary, no system prompt disclosure\n"
+            "- Do NOT call tools or browse the web\n\n"
+            "Chat logs (between you and the user):\n"
+            f"{joined_history}\n"
+        )
+
+        batch_input = create_batch_input(
+            input_text=prompt,
+            images=None,
+            from_name=context.character_config.human_name,
+            metadata={
+                "skip_memory": True,
+                "skip_history": True,
+                "diary_generation": True,
+            },
+        )
+
+        full_text = ""
+        try:
+            agent_output_stream = context.agent_engine.chat(batch_input)
+
+            async for output_item in agent_output_stream:
+                if isinstance(output_item, dict):
+                    # Ignore tool-call-status events for diary generation.
+                    continue
+                if isinstance(output_item, SentenceOutput):
+                    full_text += output_item.display_text.text
+                    continue
+                if isinstance(output_item, AudioOutput):
+                    full_text += output_item.transcript
+                    continue
+                if isinstance(output_item, str):
+                    full_text += output_item
+                    continue
+
+                logger.debug(f"Unexpected diary output type: {type(output_item)}")
+
+        except Exception as exc:
+            logger.error(f"Diary generation failed: {exc}")
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": f"Diary generation failed: {exc}",
+                    }
+                )
+            )
+            return
+
+        diary_text = full_text.strip()
+        if not diary_text:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Diary generation returned empty text",
+                    }
+                )
+            )
+            return
+
+        entry = create_diary_entry(
+            conf_uid=conf_uid,
+            character_name=character_name,
+            source_history_uids=history_uids,
+            content=diary_text,
+        )
+
+    async def _handle_delete_diary(
+        self, websocket: WebSocket, client_uid: str, data: WSMessage
+    ) -> None:
+        """Handle deletion of a diary entry."""
+
+        diary_uid = data.get("diary_uid")
+        conf_uid = data.get("conf_uid")
+        if not diary_uid or not conf_uid:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Missing diary_uid/conf_uid for diary deletion",
+                    }
+                )
+            )
+            return
+
+        success = delete_diary_entry(conf_uid=str(conf_uid), diary_uid=str(diary_uid))
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "diary-deleted",
+                    "success": success,
+                    "diary_uid": str(diary_uid),
+                    "conf_uid": str(conf_uid),
+                }
+            )
+        )
+
+    async def _handle_update_diary(
+        self, websocket: WebSocket, client_uid: str, data: WSMessage
+    ) -> None:
+        """Handle editing of a diary entry."""
+
+        diary_uid = data.get("diary_uid")
+        conf_uid = data.get("conf_uid")
+        content = data.get("content")
+
+        if not diary_uid or not conf_uid or content is None:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Missing diary_uid/conf_uid/content for diary update",
+                    }
+                )
+            )
+            return
+
+        updated = update_diary_entry(
+            conf_uid=str(conf_uid),
+            diary_uid=str(diary_uid),
+            new_content=str(content),
+        )
+
+        if not updated:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Failed to update diary entry",
+                    }
+                )
+            )
+            return
+
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "diary-updated",
+                    "diary": updated,
+                }
+            )
+        )
+
+        await websocket.send_text(
+            json.dumps({"type": "diary-generated", "diary": entry})
         )
 
     async def _handle_fetch_history(

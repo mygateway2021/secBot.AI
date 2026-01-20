@@ -21,6 +21,7 @@ import { useLocalStorage } from '@/hooks/utils/use-local-storage';
 import { useGroup } from '@/context/group-context';
 import { useInterrupt } from '@/hooks/utils/use-interrupt';
 import { useBrowser } from '@/context/browser-context';
+import { useDiary } from '@/context/diary-context';
 
 function WebSocketHandler({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
@@ -40,6 +41,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
   const autoStartMicOnConvEndRef = useRef(autoStartMicOnConvEnd);
   const { interrupt } = useInterrupt();
   const { setBrowserViewData } = useBrowser();
+  const { setDiaries, addDiary, updateDiary, removeDiary } = useDiary();
 
   useEffect(() => {
     autoStartMicOnConvEndRef.current = autoStartMicOnConvEnd;
@@ -214,6 +216,47 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
           }
         }
         break;
+      case 'diary-list':
+        if (message.diaries) {
+          setDiaries(message.diaries);
+        }
+        break;
+      case 'diary-generated':
+        if (message.diary) {
+          addDiary(message.diary);
+          toaster.create({
+            title: t('notification.diaryGenerated'),
+            type: 'success',
+            duration: 2000,
+          });
+        }
+        break;
+      case 'diary-updated':
+        if (message.diary) {
+          updateDiary(message.diary);
+          toaster.create({
+            title: t('notification.diaryUpdated'),
+            type: 'success',
+            duration: 2000,
+          });
+        }
+        break;
+      case 'diary-deleted':
+        if (message.success && message.diary_uid && message.conf_uid) {
+          removeDiary(message.conf_uid, message.diary_uid);
+          toaster.create({
+            title: t('notification.diaryDeleted'),
+            type: 'success',
+            duration: 2000,
+          });
+        } else if (message.success === false) {
+          toaster.create({
+            title: t('error.diaryDeleteFail'),
+            type: 'error',
+            duration: 2000,
+          });
+        }
+        break;
       case 'user-input-transcription':
         console.log('user-input-transcription: ', message.text);
         if (message.text) {
@@ -289,7 +332,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
       default:
         console.warn('Unknown message type:', message.type);
     }
-  }, [aiState, addAudioTask, appendHumanMessage, baseUrl, bgUrlContext, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, setSubtitleText, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t]);
+  }, [aiState, addAudioTask, appendHumanMessage, baseUrl, bgUrlContext, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, setSubtitleText, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t, setDiaries, addDiary, updateDiary, removeDiary]);
 
   useEffect(() => {
     wsService.connect(wsUrl);

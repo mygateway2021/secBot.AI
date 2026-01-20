@@ -133,7 +133,15 @@
   },
   "history": {
     "chatHistoryList": "Chat History List",
-    "noMessages": "No messages"
+    "noMessages": "No messages",
+    "historyTab": "History",
+    "dairyTab": "dairy",
+    "generateDiary": "Generate Diary",
+    "editDiary": "Edit",
+    "deleteDiary": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirmDeleteDiary": "Delete this diary entry?"
   },
   "dailyLife": {
     "title": "Daily Life",
@@ -169,7 +177,10 @@
     "newConversation": "New Conversation Started",
     "newChatHistory": "New chat history created",
     "historyDeleteSuccess": "History deleted successfully",
-    "historyDeleteFail": "Failed to delete history"
+    "historyDeleteFail": "Failed to delete history",
+    "diaryGenerated": "Diary generated",
+    "diaryUpdated": "Diary updated",
+    "diaryDeleted": "Diary deleted"
   },
   "error": {
     "cameraApiNotSupported": "Camera API is not supported on this device",
@@ -185,6 +196,7 @@
     "failedCapture": "Failed to capture {{source}} frame",
     "failedParseWebSocket": "Failed to parse WebSocket message",
     "websocketNotOpen": "WebSocket is not open.",
+    "diaryDeleteFail": "Failed to delete diary",
     "vadMisfire": "Voice detected but too brief. Try speaking louder/longer, or adjust settings (lower speech threshold, lower negative threshold, reduce redemption frames)."
   },
   "aiState": {
