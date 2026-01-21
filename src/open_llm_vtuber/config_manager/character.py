@@ -1,6 +1,6 @@
 # config_manager/character.py
 from pydantic import Field, field_validator
-from typing import Dict, ClassVar
+from typing import Dict, ClassVar, Optional
 from .i18n import I18nMixin, Description
 from .asr import ASRConfig
 from .tts import TTSConfig
@@ -8,6 +8,7 @@ from .vad import VADConfig
 from .tts_preprocessor import TTSPreprocessorConfig
 
 from .agent import AgentConfig
+from .knowledge_base import KnowledgeBaseConfig
 
 
 class CharacterConfig(I18nMixin):
@@ -21,6 +22,9 @@ class CharacterConfig(I18nMixin):
     avatar: str = Field(default="", alias="avatar")
     persona_prompt: str = Field(..., alias="persona_prompt")
     diary_prompt: str = Field(default="", alias="diary_prompt")
+    knowledge_base: Optional[KnowledgeBaseConfig] = Field(
+        default=None, alias="knowledge_base"
+    )
     agent_config: AgentConfig = Field(..., alias="agent_config")
     asr_config: ASRConfig = Field(..., alias="asr_config")
     tts_config: TTSConfig = Field(..., alias="tts_config")
@@ -52,6 +56,10 @@ class CharacterConfig(I18nMixin):
                 "If empty, a built-in default prompt will be used."
             ),
             zh=("用于该角色生成日记的提示词。留空则使用内置默认提示词。"),
+        ),
+        "knowledge_base": Description(
+            en="Optional knowledge base configuration for this character",
+            zh="该角色的可选知识库配置",
         ),
         "agent_config": Description(
             en="Configuration for the conversation agent", zh="对话代理配置"

@@ -31,10 +31,16 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
   const { aiState, setAiState, backendSynthComplete, setBackendSynthComplete } = useAiState();
   const { setModelInfo } = useLive2DConfig();
   const { setSubtitleText } = useSubtitle();
-  const { clearResponse, setForceNewMessage, appendHumanMessage, appendOrUpdateToolCallMessage } = useChatHistory();
+  const {
+    clearResponse,
+    setForceNewMessage,
+    appendHumanMessage,
+    appendOrUpdateToolCallMessage,
+    clearCurrentSpeaker,
+  } = useChatHistory();
   const { addAudioTask } = useAudioTask();
   const bgUrlContext = useBgUrl();
-  const { confUid, setConfName, setConfUid, setConfigFiles } = useConfig();
+  const { confUid, setConfName, setConfUid, setConfigFiles, setLlmProvider, setLlmModel } = useConfig();
   const [pendingModelInfo, setPendingModelInfo] = useState<ModelInfo | undefined>(undefined);
   const { setSelfUid, setGroupMembers, setIsOwner } = useGroup();
   const { startMic, stopMic, autoStartMicOnConvEnd } = useVAD();
@@ -113,6 +119,12 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
         if (message.client_uid) {
           setSelfUid(message.client_uid);
         }
+        if (message.llm_provider) {
+          setLlmProvider(message.llm_provider);
+        }
+        if (message.llm_model) {
+          setLlmModel(message.llm_model);
+        }
         setPendingModelInfo(message.model_info);
         // setModelInfo(message.model_info);
         // We don't know when the confRef in live2d-config-context will be updated, so we set a delay here for convenience
@@ -138,6 +150,13 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
         setAiState('idle');
         setSubtitleText(t('notification.characterLoaded'));
 
+        // Reset any previous speaker label/avatar immediately.
+        clearCurrentSpeaker();
+
+        // Clear model label until the backend sends the new config.
+        setLlmProvider('');
+        setLlmModel('');
+
         toaster.create({
           title: t('notification.characterSwitched'),
           type: 'success',
@@ -146,6 +165,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
 
         // setModelInfo(undefined);
 
+        wsService.sendMessage({ type: 'request-init-config' });
         wsService.sendMessage({ type: 'fetch-history-list' });
         wsService.sendMessage({ type: 'create-new-history' });
         break;
@@ -182,6 +202,9 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
       case 'new-history-created':
         setAiState('idle');
         setSubtitleText(t('notification.newConversation'));
+
+        // New conversation should not inherit previous speaker label/avatar.
+        clearCurrentSpeaker();
         // No need to open mic here
         if (message.history_uid) {
           setCurrentHistoryUid(message.history_uid);

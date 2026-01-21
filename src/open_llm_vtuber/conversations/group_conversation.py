@@ -246,11 +246,29 @@ async def handle_group_member_turn(
     new_messages = state.conversation_history[state.memory_index[current_member_uid] :]
     new_context = "\n".join(new_messages) if new_messages else ""
 
-    batch_input = create_batch_input(
+    # Get KB config if available
+    kb_config = None
+    if hasattr(context.character_config, "knowledge_base"):
+        kb_config = context.character_config.knowledge_base
+        logger.debug(
+            f"📚 KB config found: enabled={kb_config.enabled if kb_config else 'N/A'}"
+        )
+    else:
+        logger.debug("📚 No KB config in character configuration")
+
+    if context.kb_manager:
+        logger.debug(f"📚 KB manager available: {context.kb_manager}")
+    else:
+        logger.debug("📚 No KB manager in context")
+
+    batch_input = await create_batch_input(
         input_text=new_context,
         images=images,
         from_name="Human",
         metadata=metadata,
+        kb_manager=context.kb_manager,
+        conf_uid=context.character_config.conf_uid,
+        kb_config=kb_config,
     )
 
     logger.info(

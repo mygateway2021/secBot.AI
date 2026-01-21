@@ -21,7 +21,11 @@ import Live2D from './live2d';
 import ASR from './asr';
 import TTS from './tts';
 import Agent from './agent';
+import KnowledgeBase from './knowledge-base';
 import About from './about';
+import { FiSettings, FiMonitor, FiUsers, FiInfo, FiVolume2 } from 'react-icons/fi';
+import { FaBook } from 'react-icons/fa';
+import { BsMicFill } from 'react-icons/bs';
 
 interface SettingUIProps {
   open: boolean;
@@ -86,6 +90,9 @@ function SettingUI({ open, onClose }: SettingUIProps): JSX.Element {
             onCancel={handleCancelCallback}
           />
         </Tabs.Content>
+        <Tabs.Content value="knowledge-base" {...settingStyles.settingUI.tabs.content}>
+          <KnowledgeBase />
+        </Tabs.Content>
         <Tabs.Content value="about" {...settingStyles.settingUI.tabs.content}>
           <About />
         </Tabs.Content>
@@ -121,41 +128,26 @@ function SettingUI({ open, onClose }: SettingUIProps): JSX.Element {
             {...settingStyles.settingUI.tabs.root}
           >
             <Tabs.List {...settingStyles.settingUI.tabs.list}>
-              <Tabs.Trigger
-                value="general"
-                {...settingStyles.settingUI.tabs.trigger}
-              >
-                {t('settings.tabs.general')}
+              <Tabs.Trigger value="general" {...settingStyles.settingUI.tabs.trigger} title={t('settings.tabs.general')}>
+                <FiSettings size={18} />
               </Tabs.Trigger>
-              <Tabs.Trigger
-                value="live2d"
-                {...settingStyles.settingUI.tabs.trigger}
-              >
-                {t('settings.tabs.live2d')}
+              <Tabs.Trigger value="live2d" {...settingStyles.settingUI.tabs.trigger} title={t('settings.tabs.live2d')}>
+                <FiMonitor size={18} />
               </Tabs.Trigger>
-              <Tabs.Trigger
-                value="asr"
-                {...settingStyles.settingUI.tabs.trigger}
-              >
-                {t('settings.tabs.asr')}
+              <Tabs.Trigger value="asr" {...settingStyles.settingUI.tabs.trigger} title={t('settings.tabs.asr')}>
+                <BsMicFill size={18} />
               </Tabs.Trigger>
-              <Tabs.Trigger
-                value="tts"
-                {...settingStyles.settingUI.tabs.trigger}
-              >
-                {t('settings.tabs.tts')}
+              <Tabs.Trigger value="tts" {...settingStyles.settingUI.tabs.trigger} title={t('settings.tabs.tts')}>
+                <FiVolume2 size={18} />
               </Tabs.Trigger>
-              <Tabs.Trigger
-                value="agent"
-                {...settingStyles.settingUI.tabs.trigger}
-              >
-                {t('settings.tabs.agent')}
+              <Tabs.Trigger value="agent" {...settingStyles.settingUI.tabs.trigger} title={t('settings.tabs.agent')}>
+                <FiUsers size={18} />
               </Tabs.Trigger>
-              <Tabs.Trigger
-                value="about"
-                {...settingStyles.settingUI.tabs.trigger}
-              >
-                {t('settings.tabs.about')}
+              <Tabs.Trigger value="knowledge-base" {...settingStyles.settingUI.tabs.trigger} title={t('settings.tabs.knowledgeBase')}>
+                <FaBook size={16} />
+              </Tabs.Trigger>
+              <Tabs.Trigger value="about" {...settingStyles.settingUI.tabs.trigger} title={t('settings.tabs.about')}>
+                <FiInfo size={18} />
               </Tabs.Trigger>
             </Tabs.List>
 

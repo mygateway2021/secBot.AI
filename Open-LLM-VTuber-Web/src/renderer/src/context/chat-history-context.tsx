@@ -15,6 +15,7 @@ interface ChatHistoryState {
   currentHistoryUid: string | null;
   currentSpeakerName: string;
   currentSpeakerAvatar: string;
+  clearCurrentSpeaker: () => void;
   appendHumanMessage: (content: string) => void;
   appendAIMessage: (content: string, name?: string, avatar?: string) => void;
   appendOrUpdateToolCallMessage: (toolMessageData: Partial<Message>) => void; // Accept partial data
@@ -80,6 +81,11 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       timestamp: new Date().toISOString(),
     };
     setMessages((prevMessages) => [...prevMessages, newMessage]);
+  }, []);
+
+  const clearCurrentSpeaker = useCallback(() => {
+    setCurrentSpeakerName(DEFAULT_HISTORY.currentSpeakerName);
+    setCurrentSpeakerAvatar(DEFAULT_HISTORY.currentSpeakerAvatar);
   }, []);
 
   /**
@@ -216,6 +222,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       currentHistoryUid,
       currentSpeakerName,
       currentSpeakerAvatar,
+      clearCurrentSpeaker,
       appendHumanMessage,
       appendAIMessage,
       appendOrUpdateToolCallMessage, // Add to context value
@@ -235,6 +242,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       currentHistoryUid,
       currentSpeakerName,
       currentSpeakerAvatar,
+      clearCurrentSpeaker,
       appendHumanMessage,
       appendAIMessage,
       appendOrUpdateToolCallMessage, // Add dependency

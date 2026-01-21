@@ -21,9 +21,13 @@ interface CharacterConfigState {
   confUid: string;
   configFiles: ConfigFile[];
   chatAvatarByConfUid: Record<string, string>;
+  llmProvider: string;
+  llmModel: string;
   setConfName: (name: string) => void;
   setConfUid: (uid: string) => void;
   setConfigFiles: (files: ConfigFile[]) => void;
+  setLlmProvider: (provider: string) => void;
+  setLlmModel: (model: string) => void;
   getFilenameByName: (name: string) => string | undefined;
   getChatAvatarForConfUid: (uid: string) => string;
   setChatAvatarForConfUid: (uid: string, src: string) => void;
@@ -38,6 +42,8 @@ const DEFAULT_CONFIG = {
   confUid: '',
   configFiles: [] as ConfigFile[],
   chatAvatarByConfUid: {} as Record<string, string>,
+  llmProvider: '',
+  llmModel: '',
 };
 
 /**
@@ -54,6 +60,8 @@ export function CharacterConfigProvider({ children }: { children: React.ReactNod
   const [confName, setConfName] = useState<string>(DEFAULT_CONFIG.confName);
   const [confUid, setConfUid] = useState<string>(DEFAULT_CONFIG.confUid);
   const [configFiles, setConfigFiles] = useState<ConfigFile[]>(DEFAULT_CONFIG.configFiles);
+  const [llmProvider, setLlmProvider] = useState<string>(DEFAULT_CONFIG.llmProvider);
+  const [llmModel, setLlmModel] = useState<string>(DEFAULT_CONFIG.llmModel);
   const [chatAvatarByConfUid, setChatAvatarByConfUid] = useLocalStorage<Record<string, string>>(
     'chatAvatarByConfUid',
     DEFAULT_CONFIG.chatAvatarByConfUid,
@@ -90,9 +98,13 @@ export function CharacterConfigProvider({ children }: { children: React.ReactNod
       confUid,
       configFiles,
       chatAvatarByConfUid,
+      llmProvider,
+      llmModel,
       setConfName,
       setConfUid,
       setConfigFiles,
+      setLlmProvider,
+      setLlmModel,
       getFilenameByName,
       getChatAvatarForConfUid,
       setChatAvatarForConfUid,
@@ -103,6 +115,8 @@ export function CharacterConfigProvider({ children }: { children: React.ReactNod
       confUid,
       configFiles,
       chatAvatarByConfUid,
+      llmProvider,
+      llmModel,
       getFilenameByName,
       getChatAvatarForConfUid,
       setChatAvatarForConfUid,

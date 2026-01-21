@@ -13,6 +13,7 @@
       "asr": "识别",
       "tts": "合成",
       "agent": "代理",
+      "knowledgeBase": "知识库",
       "microsoftTodo": "Microsoft To Do",
       "about": "关于"
     },
@@ -98,6 +99,42 @@
       "documentation": "文档",
       "copyright": "版权",
       "viewLicense": "查看许可证"
+    },
+    "knowledgeBase": {
+      "noCharacterSelected": "请先选择一个角色",
+      "uploadDocument": "上传文档",
+      "uploading": "上传中...",
+      "uploadSuccess": "文档上传成功",
+      "deleteSuccess": "文档删除成功",
+      "supportedFormats": "支持的格式",
+      "documents": "文档列表",
+      "noDocuments": "尚未上传任何文档",
+      "searchPlaceholder": "搜索文档...",
+      "dragDropText": "拖拽文件到此处或点击浏览",
+      "noSearchResults": "没有匹配的文档",
+      "stats": {
+        "title": "知识库统计",
+        "totalDocuments": "总文档数",
+        "totalChunks": "总块数",
+        "dbSize": "数据库大小"
+      },
+      "status": {
+        "indexed": "已索引",
+        "processing": "处理中",
+        "uploaded": "已上传",
+        "error": "错误"
+      },
+      "table": {
+        "filename": "文件名",
+        "status": "状态",
+        "size": "大小",
+        "actions": "操作"
+      },
+      "errors": {
+        "loadFailed": "加载文档失败",
+        "uploadFailed": "上传文档失败",
+        "deleteFailed": "删除文档失败"
+      }
     }
   },
   "footer": {

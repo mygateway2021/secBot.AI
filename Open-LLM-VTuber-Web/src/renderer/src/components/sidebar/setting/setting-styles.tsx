@@ -42,6 +42,10 @@ export const settingStyles = {
       content: {},
       trigger: {
         color: 'whiteAlpha.600',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '48px',
         _selected: {
           color: 'white',
         },
@@ -71,7 +75,7 @@ export const settingStyles = {
     },
     drawerContent: {
       bg: 'gray.900',
-      maxWidth: '440px',
+      maxWidth: '540px',
       height: isElectron ? 'calc(100vh - 30px)' : '100vh',
       borderLeft: '1px solid',
       borderColor: 'whiteAlpha.200',

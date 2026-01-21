@@ -2,6 +2,7 @@ from typing import Dict, List, Optional, Callable, TypedDict
 from fastapi import WebSocket, WebSocketDisconnect
 import asyncio
 import json
+import os
 from enum import Enum
 import numpy as np
 from loguru import logger
@@ -180,6 +181,32 @@ class WebSocketHandler:
             json.dumps({"type": "full-text", "text": "Connection established"})
         )
 
+        # Get the active agent config based on conversation_agent_choice
+        agent_choice = session_service_context.character_config.agent_config.conversation_agent_choice
+        active_agent_config = getattr(
+            session_service_context.character_config.agent_config.agent_settings,
+            agent_choice,
+            None,
+        )
+        llm_provider = (
+            getattr(active_agent_config, "llm_provider", None)
+            if active_agent_config
+            else None
+        )
+        llm_model = None
+        if llm_provider:
+            provider_config = getattr(
+                session_service_context.character_config.agent_config.llm_configs,
+                llm_provider,
+                None,
+            )
+            if provider_config is not None:
+                llm_model = getattr(provider_config, "model", None)
+                if llm_model is None:
+                    model_path = getattr(provider_config, "model_path", None)
+                    if model_path:
+                        llm_model = os.path.basename(model_path)
+
         await websocket.send_text(
             json.dumps(
                 {
@@ -188,6 +215,8 @@ class WebSocketHandler:
                     "conf_name": session_service_context.character_config.conf_name,
                     "conf_uid": session_service_context.character_config.conf_uid,
                     "client_uid": client_uid,
+                    "llm_provider": llm_provider,
+                    "llm_model": llm_model,
                 }
             )
         )
@@ -219,6 +248,7 @@ class WebSocketHandler:
             translate_engine=self.default_context_cache.translate_engine,
             mcp_server_registery=self.default_context_cache.mcp_server_registery,
             tool_adapter=self.default_context_cache.tool_adapter,
+            kb_manager=self.default_context_cache.kb_manager,
             send_text=send_text,
             client_uid=client_uid,
         )
@@ -581,7 +611,7 @@ class WebSocketHandler:
             f"{joined_history}\n"
         )
 
-        batch_input = create_batch_input(
+        batch_input = await create_batch_input(
             input_text=prompt,
             images=None,
             from_name=context.character_config.human_name,
@@ -916,6 +946,30 @@ class WebSocketHandler:
         if not context:
             context = self.default_context_cache
 
+        # Get the active agent config based on conversation_agent_choice
+        agent_choice = context.character_config.agent_config.conversation_agent_choice
+        active_agent_config = getattr(
+            context.character_config.agent_config.agent_settings, agent_choice, None
+        )
+        llm_provider = (
+            getattr(active_agent_config, "llm_provider", None)
+            if active_agent_config
+            else None
+        )
+        llm_model = None
+        if llm_provider:
+            provider_config = getattr(
+                context.character_config.agent_config.llm_configs,
+                llm_provider,
+                None,
+            )
+            if provider_config is not None:
+                llm_model = getattr(provider_config, "model", None)
+                if llm_model is None:
+                    model_path = getattr(provider_config, "model_path", None)
+                    if model_path:
+                        llm_model = os.path.basename(model_path)
+
         await websocket.send_text(
             json.dumps(
                 {
@@ -924,6 +978,8 @@ class WebSocketHandler:
                     "conf_name": context.character_config.conf_name,
                     "conf_uid": context.character_config.conf_uid,
                     "client_uid": client_uid,
+                    "llm_provider": llm_provider,
+                    "llm_model": llm_model,
                 }
             )
         )

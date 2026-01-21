@@ -15,8 +15,10 @@ from starlette.responses import Response
 from starlette.staticfiles import StaticFiles as StarletteStaticFiles
 
 from .routes import init_client_ws_route, init_webtool_routes, init_proxy_route
+from .kb_routes import init_kb_routes
 from .service_context import ServiceContext
 from .config_manager.utils import Config
+from .knowledge_base import KnowledgeBaseManager
 
 
 # Create a custom StaticFiles class that adds CORS headers
@@ -79,6 +81,9 @@ class WebSocketServer:
         )  # Use provided context or initialize a new empty one waiting to be loaded
         # It will be populated during the initialize method call
 
+        # Initialize Knowledge Base Manager
+        self.kb_manager = KnowledgeBaseManager()
+
         # Add global CORS middleware
         self.app.add_middleware(
             CORSMiddleware,
@@ -95,6 +100,12 @@ class WebSocketServer:
         )
         self.app.include_router(
             init_webtool_routes(default_context_cache=self.default_context_cache),
+        )
+        self.app.include_router(
+            init_kb_routes(
+                kb_manager=self.kb_manager,
+                context_cache=self.default_context_cache,
+            ),
         )
 
         # Initialize and include proxy routes if proxy is enabled
@@ -144,6 +155,8 @@ class WebSocketServer:
     async def initialize(self):
         """Asynchronously load the service context from config.
         Calling this function is needed if default_context_cache was not provided to the constructor."""
+        # Wire KB manager into the service context BEFORE loading config
+        self.default_context_cache.kb_manager = self.kb_manager
         await self.default_context_cache.load_from_config(self.config)
 
     @staticmethod

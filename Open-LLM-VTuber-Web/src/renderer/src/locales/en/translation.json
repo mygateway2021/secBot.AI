@@ -13,6 +13,7 @@
       "asr": "ASR",
       "tts": "TTS",
       "agent": "Agent",
+      "knowledgeBase": "Knowledge Base",
       "microsoftTodo": "Microsoft To Do",
       "about": "About"
     },
@@ -101,6 +102,42 @@
       "license": "License",
       "copyright": "Copyright",
       "viewLicense": "View License"
+    },
+    "knowledgeBase": {
+      "noCharacterSelected": "Please select a character first",
+      "uploadDocument": "Upload Document",
+      "uploading": "Uploading...",
+      "uploadSuccess": "Document uploaded successfully",
+      "deleteSuccess": "Document deleted successfully",
+      "supportedFormats": "Supported formats",
+      "documents": "Documents",
+      "noDocuments": "No documents uploaded yet",
+      "searchPlaceholder": "Search documents...",
+      "dragDropText": "Drag and drop files here or click to browse",
+      "noSearchResults": "No documents match your search",
+      "stats": {
+        "title": "Knowledge Base Statistics",
+        "totalDocuments": "Total Documents",
+        "totalChunks": "Total Chunks",
+        "dbSize": "Database Size"
+      },
+      "status": {
+        "indexed": "Indexed",
+        "processing": "Processing",
+        "uploaded": "Uploaded",
+        "error": "Error"
+      },
+      "table": {
+        "filename": "Filename",
+        "status": "Status",
+        "size": "Size",
+        "actions": "Actions"
+      },
+      "errors": {
+        "loadFailed": "Failed to load documents",
+        "uploadFailed": "Failed to upload document",
+        "deleteFailed": "Failed to delete document"
+      }
     }
   },
   "footer": {
@@ -251,6 +288,7 @@
     "diaryDeleteFail": "Failed to delete diary",
     "vadMisfire": "Voice detected but too brief. Try speaking louder/longer, or adjust settings (lower speech threshold, lower negative threshold, reduce redemption frames)."
   },
+
   "aiState": {
     "idle": "idle",
     "thinking-speaking": "thinking/speaking",

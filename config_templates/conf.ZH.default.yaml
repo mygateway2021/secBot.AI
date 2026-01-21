@@ -53,6 +53,19 @@ character_config:
   diary_prompt: |
     
 
+  # ============== 知识库（RAG）设置 ==============
+  # 可选的角色知识库，用于文档存储和检索。
+  # 通过 API 上传文档后，AI 可以在对话中检索相关信息。
+  
+  # knowledge_base:
+  #   enabled: false  # 是否为该角色启用知识库
+  #   backend: 'sqlite_fts5'  # 'sqlite_fts5'（快速、关键词、离线）或 'embeddings'（语义、需要模型）
+  #   top_k: 3  # 检索结果数量
+  #   max_context_chars: 2000  # 注入提示词的检索上下文最大字符数
+  #   chunk_size: 500  # 索引文本块大小（字符数）
+  #   chunk_overlap: 50  # 文本块之间的重叠部分以保持上下文（字符数）
+  #   min_similarity: 0.3  # 检索结果的最小相似度分数（0.0-1.0，仅用于 embeddings 后端）
+
   #  =================== LLM 后端设置 ===================
 
   agent_config:

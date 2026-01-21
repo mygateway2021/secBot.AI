@@ -66,6 +66,8 @@ export interface MessageEvent {
   model_info?: ModelInfo;
   conf_name?: string;
   conf_uid?: string;
+  llm_provider?: string;
+  llm_model?: string;
   uids?: string[];
   messages?: Message[];
   history_uid?: string;

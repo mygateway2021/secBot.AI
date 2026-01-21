@@ -59,12 +59,30 @@ async def process_single_conversation(
             user_input, context.asr_engine, websocket_send
         )
 
-        # Create batch input
-        batch_input = create_batch_input(
+        # Get KB config if available
+        kb_config = None
+        if hasattr(context.character_config, "knowledge_base"):
+            kb_config = context.character_config.knowledge_base
+            logger.debug(
+                f"📚 KB config found: enabled={kb_config.enabled if kb_config else 'N/A'}"
+            )
+        else:
+            logger.debug("📚 No KB config in character configuration")
+
+        if context.kb_manager:
+            logger.debug(f"📚 KB manager available: {context.kb_manager}")
+        else:
+            logger.debug("📚 No KB manager in context")
+
+        # Create batch input with KB retrieval
+        batch_input = await create_batch_input(
             input_text=input_text,
             images=images,
             from_name=context.character_config.human_name,
             metadata=metadata,
+            kb_manager=context.kb_manager,
+            conf_uid=context.character_config.conf_uid,
+            kb_config=kb_config,
         )
 
         # Store user message (check if we should skip storing to history)

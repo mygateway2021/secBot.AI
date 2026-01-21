@@ -37,6 +37,9 @@ from .config_manager import (
     validate_config,
 )
 
+# Import KB manager for knowledge base operations
+from .knowledge_base import KnowledgeBaseManager
+
 
 class ServiceContext:
     """Initializes, stores, and updates the asr, tts, and llm instances and other
@@ -54,6 +57,9 @@ class ServiceContext:
         # translate_engine can be none if translation is disabled
         self.vad_engine: VADInterface | None = None
         self.translate_engine: TranslateInterface | None = None
+
+        # Knowledge base manager (shared across all contexts)
+        self.kb_manager: KnowledgeBaseManager | None = None
 
         self.mcp_server_registery: ServerRegistry | None = None
         self.tool_adapter: ToolAdapter | None = None
@@ -211,6 +217,7 @@ class ServiceContext:
         translate_engine: TranslateInterface | None,
         mcp_server_registery: ServerRegistry | None = None,
         tool_adapter: ToolAdapter | None = None,
+        kb_manager: KnowledgeBaseManager | None = None,
         send_text: Callable = None,
         client_uid: str = None,
     ) -> None:
@@ -235,6 +242,7 @@ class ServiceContext:
         # Load potentially shared components by reference
         self.mcp_server_registery = mcp_server_registery
         self.tool_adapter = tool_adapter
+        self.kb_manager = kb_manager
         self.send_text = send_text
         self.client_uid = client_uid
 
@@ -262,6 +270,28 @@ class ServiceContext:
 
         if not self.character_config:
             self.character_config = config.character_config
+
+        # Log KB configuration status
+        if (
+            hasattr(config.character_config, "knowledge_base")
+            and config.character_config.knowledge_base
+        ):
+            kb_config = config.character_config.knowledge_base
+            logger.info(
+                f"📚 KB Configuration for '{config.character_config.conf_uid}': enabled={kb_config.enabled}, backend={kb_config.backend}, top_k={kb_config.top_k}"
+            )
+            if self.kb_manager:
+                logger.info(
+                    f"📚 KB Manager available for character '{config.character_config.conf_uid}'"
+                )
+            else:
+                logger.warning(
+                    f"⚠️ KB config found but KB Manager not available for '{config.character_config.conf_uid}'"
+                )
+        else:
+            logger.debug(
+                f"📚 No KB configuration for character '{config.character_config.conf_uid}'"
+            )
 
         # update all sub-configs
 

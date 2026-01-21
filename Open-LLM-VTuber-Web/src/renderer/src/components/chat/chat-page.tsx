@@ -1,11 +1,71 @@
-import { Box, Flex, Image, Text, Spinner } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Image, Spinner, Text } from '@chakra-ui/react';
 import { useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { FiPrinter } from 'react-icons/fi';
+import { Tooltip } from '@/components/ui/tooltip';
 import { useChatHistory } from '@/context/chat-history-context';
 import { useConfig } from '@/context/character-config-context';
 import { useAiState } from '@/context/ai-state-context';
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function convertMarkdownToHTML(markdown: string): string {
+  let html = escapeHtml(markdown);
+
+  // Fenced code blocks
+  html = html.replace(/```[\w-]*\n([\s\S]*?)```/g, (_m, code: string) => {
+    return `<pre><code>${code}</code></pre>`;
+  });
+
+  // Inline code
+  html = html.replace(/`([^`]+?)`/g, '<code>$1</code>');
+
+  // Headers
+  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  // Lists: convert list lines to <li>, then wrap consecutive items
+  html = html.replace(/^(?:-|\*)\s+(.+)$/gim, '<li>$1</li>');
+  html = html.replace(/(?:^|\n)((?:<li>.*<\/li>(?:\n|$))+)/g, (_m, group: string) => {
+    const trimmed = group.trim();
+    return `\n<ul>\n${trimmed}\n</ul>\n`;
+  });
+
+  // Paragraphs
+  html = html
+    .split(/\n\n+/)
+    .map((para) => {
+      const trimmed = para.trim();
+      if (!trimmed) return '';
+      if (trimmed.startsWith('<')) return trimmed;
+      return `<p>${trimmed.replace(/\n/g, '<br/>')}</p>`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  return html;
+}
+
+function formatTimestampForTranscript(timestamp: string | undefined): string {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString();
+}
 
 export default function ChatPage(): JSX.Element {
   const {
@@ -18,6 +78,8 @@ export default function ChatPage(): JSX.Element {
     confUid,
     confName,
     getChatAvatarForConfUid,
+    llmProvider,
+    llmModel,
   } = useConfig();
 
   const { aiState } = useAiState();
@@ -25,20 +87,136 @@ export default function ChatPage(): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const characterName = currentSpeakerName || confName || 'Character';
+  const characterName = confName || currentSpeakerName || 'Character';
   const configuredAvatar = useMemo(() => (confUid ? getChatAvatarForConfUid(confUid) : ''), [confUid, getChatAvatarForConfUid]);
-  const characterImageSrc = configuredAvatar || currentSpeakerAvatar || '';
+  const shouldUseSpeakerAvatar = !confName || !currentSpeakerName || currentSpeakerName === confName;
+  const characterImageSrc = configuredAvatar || (shouldUseSpeakerAvatar ? (currentSpeakerAvatar || '') : '');
+
+  // Get the LLM model display text
+  const llmDisplayText = useMemo(() => {
+    const formattedProvider = llmProvider 
+      ? llmProvider.replace(/_/g, ' ').replace(/llm$/i, '').trim() 
+      : '';
+    
+    if (formattedProvider && llmModel) {
+      return `${formattedProvider}, ${llmModel}`;
+    }
+    if (llmModel) {
+      return llmModel;
+    }
+    if (formattedProvider) {
+      return formattedProvider;
+    }
+    return '';
+  }, [llmProvider, llmModel]);
 
   // Get the last AI message content to display
   const displayContent = useMemo(() => {
-    const aiMessages = messages.filter(m => m.role === 'ai' && m.type === 'text');
+    const aiMessages = messages
+      .filter((m) => m.role === 'ai' && m.type === 'text')
+      // If a character is selected, prefer only that character's AI messages.
+      // This prevents briefly showing the previous character's last message after a switch.
+      .filter((m) => !confName || !m.name || m.name === confName);
     return aiMessages.length > 0 ? aiMessages[aiMessages.length - 1].content : '';
-  }, [messages]);
+  }, [messages, confName]);
 
   // Check if AI is currently generating response
   const isGenerating = useMemo(() => {
     return aiState === 'thinking-speaking';
   }, [aiState]);
+
+  const printChatAsMarkdown = () => {
+    const printableMessages = messages
+      .filter((m) => m.role && m.type)
+      .filter((m) => (m.role === 'human' || m.role === 'ai') && m.type === 'text')
+      .map((m) => {
+        const speaker = m.role === 'human' ? 'User' : (m.name || characterName || 'AI');
+        const time = formatTimestampForTranscript(m.timestamp);
+        const header = time ? `## ${speaker} (${time})` : `## ${speaker}`;
+        const content = (m.content || '').trim();
+        return `${header}\n\n${content}\n`;
+      });
+
+    const printedAt = new Date().toLocaleString();
+    const titleLine = `# Chat Transcript: ${characterName}`;
+    const metaLines = [
+      llmDisplayText ? `- Model: ${llmDisplayText}` : null,
+      `- Printed at: ${printedAt}`,
+    ].filter(Boolean).join('\n');
+
+    const markdown = [
+      titleLine,
+      '',
+      metaLines,
+      '',
+      ...printableMessages,
+    ].join('\n');
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const htmlBody = convertMarkdownToHTML(markdown);
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${escapeHtml(`Chat Transcript - ${characterName}`)}</title>
+          <style>
+            @media print {
+              body { margin: 0; padding: 20mm; }
+              @page { size: A4; margin: 0; }
+            }
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 900px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            h1, h2, h3, h4, h5, h6 {
+              margin-top: 1.25em;
+              margin-bottom: 0.5em;
+              font-weight: 600;
+            }
+            h1 { font-size: 1.8em; border-bottom: 2px solid #333; padding-bottom: 0.3em; }
+            h2 { font-size: 1.25em; border-bottom: 1px solid #ccc; padding-bottom: 0.2em; }
+            h3 { font-size: 1.1em; }
+            p { margin: 0.75em 0; }
+            ul { margin: 0.75em 0; padding-left: 1.5em; }
+            li { margin: 0.25em 0; }
+            code {
+              background-color: #f4f4f4;
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+              font-size: 0.95em;
+            }
+            pre {
+              background-color: #f4f4f4;
+              padding: 1em;
+              border-radius: 5px;
+              overflow-x: auto;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="content">${htmlBody}</div>
+          <script>
+            window.onload = () => {
+              window.print();
+              setTimeout(() => window.close(), 100);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
 
   // Auto-scroll to bottom as the response grows.
   useEffect(() => {
@@ -66,9 +244,7 @@ export default function ChatPage(): JSX.Element {
           flexShrink={0}
         >
           <Box />
-          <Text fontSize="xs" color="whiteAlpha.600">
-            Scroll to view full content
-          </Text>
+          <Box />
         </Flex>
 
         <Box
@@ -134,9 +310,28 @@ export default function ChatPage(): JSX.Element {
                 </Box>
 
                 <Box flex={1} minW={0}>
-                  <Text fontSize="lg" fontWeight="semibold" color="whiteAlpha.900" mb={3}>
-                    {characterName}
-                  </Text>
+                  <Flex align="baseline" gap={2} mb={3} flexWrap="wrap">
+                    <Text fontSize="lg" fontWeight="semibold" color="whiteAlpha.900">
+                      {characterName}
+                    </Text>
+                    <Tooltip showArrow content="Print chat (Markdown)">
+                      <IconButton
+                        aria-label="Print chat (Markdown)"
+                        size="xs"
+                        variant="ghost"
+                        color="whiteAlpha.900"
+                        _hover={{ bg: 'whiteAlpha.200' }}
+                        onClick={printChatAsMarkdown}
+                      >
+                        <FiPrinter />
+                      </IconButton>
+                    </Tooltip>
+                    {llmDisplayText ? (
+                      <Text fontSize="sm" color="whiteAlpha.700">
+                        ({llmDisplayText})
+                      </Text>
+                    ) : null}
+                  </Flex>
                   {isGenerating ? (
                     <Flex align="center" gap={3} py={4}>
                       <Spinner size="md" color="blue.400" />

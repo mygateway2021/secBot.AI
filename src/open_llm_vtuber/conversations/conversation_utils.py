@@ -17,14 +17,68 @@ from ..utils.stream_audio import prepare_audio_payload
 
 
 # Convert class methods to standalone functions
-def create_batch_input(
+async def create_batch_input(
     input_text: str,
     images: Optional[List[Dict[str, Any]]],
     from_name: str,
     metadata: Optional[Dict[str, Any]] = None,
+    kb_manager=None,
+    conf_uid: Optional[str] = None,
+    kb_config=None,
 ) -> BatchInput:
-    """Create batch input for agent processing"""
+    """Create batch input for agent processing with optional KB retrieval"""
     texts = [TextData(source=TextSource.INPUT, content=input_text, from_name=from_name)]
+
+    # Inject KB context if enabled
+    logger.debug(
+        f"📚 KB check - manager={kb_manager is not None}, conf_uid={conf_uid}, config={kb_config}, enabled={kb_config.enabled if kb_config else 'N/A'}"
+    )
+
+    if kb_manager and conf_uid and kb_config and kb_config.enabled:
+        try:
+            logger.info(
+                f"🔍 KB RAG enabled - retrieving context for query: '{input_text[:100]}...'"
+            )
+            logger.info(
+                f"🔍 KB params: top_k={kb_config.top_k}, max_chars={kb_config.max_context_chars}"
+            )
+
+            results = await kb_manager.retrieve(
+                conf_uid=conf_uid,
+                query=input_text,
+                top_k=kb_config.top_k,
+                max_chars=kb_config.max_context_chars,
+            )
+
+            if results:
+                formatted_context = await kb_manager.format_retrieved_context(results)
+                texts.insert(
+                    0,  # Add at the beginning as context
+                    TextData(
+                        source=TextSource.KB_CONTEXT,
+                        content=formatted_context,
+                        from_name=None,
+                    ),
+                )
+                logger.info(
+                    f"✅ KB RAG: Injected {len(results)} results ({len(formatted_context)} chars) into context"
+                )
+            else:
+                logger.info("📚 KB RAG: No results found for query")
+        except Exception as e:
+            logger.error(f"❌ KB RAG failed: {e}")
+            import traceback
+
+            logger.error(traceback.format_exc())
+    else:
+        if not kb_manager:
+            logger.debug("📚 KB RAG skipped: No KB manager")
+        elif not conf_uid:
+            logger.debug("📚 KB RAG skipped: No conf_uid")
+        elif not kb_config:
+            logger.debug("📚 KB RAG skipped: No KB config")
+        elif not kb_config.enabled:
+            logger.debug("📚 KB RAG skipped: KB disabled in config")
 
     # Inject daily schedule as context if present
     if metadata and "daily_schedule" in metadata:

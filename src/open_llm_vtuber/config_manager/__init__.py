@@ -9,6 +9,7 @@ and utility functions for loading/saving configurations.
 from .main import Config
 from .system import SystemConfig
 from .character import CharacterConfig
+from .knowledge_base import KnowledgeBaseConfig
 from .live import LiveConfig, BiliBiliLiveConfig
 from .daily_life import DailyLifeConfig
 from .stateless_llm import (
@@ -70,6 +71,7 @@ __all__ = [
     "Config",
     "SystemConfig",
     "CharacterConfig",
+    "KnowledgeBaseConfig",
     "LiveConfig",
     "BiliBiliLiveConfig",
     "DailyLifeConfig",

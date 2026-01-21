@@ -53,6 +53,19 @@ character_config:
   diary_prompt: |
     
 
+  # ============== Knowledge Base (RAG) Settings ==============
+  # Optional per-character knowledge base for document storage and retrieval.
+  # Upload documents via API, then the AI can retrieve relevant information during chat.
+  
+  # knowledge_base:
+  #   enabled: false  # Enable knowledge base for this character
+  #   backend: 'sqlite_fts5'  # 'sqlite_fts5' (fast, keyword-based, offline) or 'embeddings' (semantic, requires model)
+  #   top_k: 3  # Number of top results to retrieve
+  #   max_context_chars: 2000  # Maximum characters of retrieved context to inject into prompt
+  #   chunk_size: 500  # Size of text chunks for indexing (in characters)
+  #   chunk_overlap: 50  # Overlap between chunks to maintain context (in characters)
+  #   min_similarity: 0.3  # Minimum similarity score for results (0.0-1.0, only for embeddings backend)
+
   #  =================== LLM Backend Settings ===================
 
   agent_config:
