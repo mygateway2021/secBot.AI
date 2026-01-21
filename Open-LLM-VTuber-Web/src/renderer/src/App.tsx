@@ -1,6 +1,12 @@
 /* eslint-disable no-shadow */
 // import { StrictMode } from 'react';
-import { Box, Flex, ChakraProvider, defaultSystem } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  ChakraProvider,
+  defaultSystem,
+  ButtonGroup,
+} from "@chakra-ui/react";
 import { useState, useEffect, useRef } from "react";
 // import Canvas from './components/canvas/canvas'; // Likely unused now
 import Sidebar from "./components/sidebar/sidebar";
@@ -30,10 +36,15 @@ import Background from "./components/canvas/background";
 import WebSocketStatus from "./components/canvas/ws-status";
 import Subtitle from "./components/canvas/subtitle";
 import { ModeProvider, useMode } from "./context/mode-context";
+import { Button } from "./components/ui/button";
+import ChatPage from "./components/chat/chat-page";
+
+type MainView = "live2d" | "chat";
 
 function AppContent(): JSX.Element {
   const [showSidebar, setShowSidebar] = useState(true);
   const [isFooterCollapsed, setIsFooterCollapsed] = useState(false);
+  const [mainView, setMainView] = useState<MainView>("live2d");
   const { mode } = useMode();
   const isElectron = window.api !== undefined;
   const live2dContainerRef = useRef<HTMLDivElement>(null);
@@ -101,6 +112,8 @@ function AppContent(): JSX.Element {
         {...(mode === "window"
           ? getResponsiveLive2DWindowStyle(showSidebar)
           : live2dPetStyle)}
+        opacity={mode === "window" && mainView === "chat" ? 0 : 1}
+        pointerEvents={mode === "window" && mainView === "chat" ? "none" : "auto"}
       >
         <Live2D />
       </Box>
@@ -121,20 +134,47 @@ function AppContent(): JSX.Element {
               />
             </Box>
             <Box {...layoutStyles.mainContent}>
-              <Background />
-              <Box position="absolute" top="20px" left="20px" zIndex={10}>
-                <WebSocketStatus />
+              <Box flex={1} minH={0} position="relative" overflow="hidden">
+                <Background />
+
+                <Box position="absolute" top="20px" left="20px" zIndex={11}>
+                  <Flex gap={3} align="center">
+                    <WebSocketStatus />
+                    <ButtonGroup attached>
+                      <Button
+                        size="sm"
+                        variant={mainView === "live2d" ? "solid" : "subtle"}
+                        onClick={() => setMainView("live2d")}
+                      >
+                        Live2D
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={mainView === "chat" ? "solid" : "subtle"}
+                        onClick={() => setMainView("chat")}
+                      >
+                        Chat
+                      </Button>
+                    </ButtonGroup>
+                  </Flex>
+                </Box>
+
+                {mainView === "live2d" && (
+                  <Box
+                    position="absolute"
+                    bottom={isFooterCollapsed ? "39px" : "135px"}
+                    left="50%"
+                    transform="translateX(-50%)"
+                    zIndex={10}
+                    width="60%"
+                  >
+                    <Subtitle />
+                  </Box>
+                )}
+
+                {mainView === "chat" && <ChatPage />}
               </Box>
-              <Box
-                position="absolute"
-                bottom={isFooterCollapsed ? "39px" : "135px"}
-                left="50%"
-                transform="translateX(-50%)"
-                zIndex={10}
-                width="60%"
-              >
-                <Subtitle />
-              </Box>
+
               <Box
                 {...layoutStyles.footer}
                 zIndex={10}

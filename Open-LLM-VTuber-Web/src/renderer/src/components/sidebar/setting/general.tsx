@@ -8,9 +8,11 @@ import {
   IconButton,
   Textarea,
   Spinner,
+  Box,
+  Image,
 } from "@chakra-ui/react";
 import { FiEdit2 } from 'react-icons/fi';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { parse as parseYaml } from 'yaml';
 import { useBgUrl } from "@/context/bgurl-context";
 import { settingStyles } from "./setting-styles";
@@ -72,9 +74,18 @@ const useCollections = () => {
 function General({ onSave, onCancel }: GeneralProps): JSX.Element {
   const { t, i18n } = useTranslation();
   const bgUrlContext = useBgUrl();
-  const { confName, setConfName } = useConfig();
+  const {
+    confName,
+    confUid,
+    setConfName,
+    getChatAvatarForConfUid,
+    setChatAvatarForConfUid,
+    clearChatAvatarForConfUid,
+  } = useConfig();
   const { wsUrl, setWsUrl, baseUrl, setBaseUrl } = useWebSocket();
   const collections = useCollections();
+
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isCharacterEditorOpen, setIsCharacterEditorOpen] = useState(false);
   const [yamlDraft, setYamlDraft] = useState('');
@@ -205,6 +216,47 @@ function General({ onSave, onCancel }: GeneralProps): JSX.Element {
     </Flex>
   );
 
+  const currentChatAvatar = useMemo(() => {
+    if (!confUid) return '';
+    return getChatAvatarForConfUid(confUid);
+  }, [confUid, getChatAvatarForConfUid]);
+
+  const handleChatAvatarUrlChange = useCallback((value: string) => {
+    if (!confUid) {
+      toaster.create({
+        title: 'No character selected',
+        description: 'Select a character preset first, then set its chat image.',
+        type: 'warning',
+        duration: 2500,
+      });
+      return;
+    }
+    setChatAvatarForConfUid(confUid, value);
+  }, [confUid, setChatAvatarForConfUid]);
+
+  const handleChatAvatarFileChange = useCallback(async (file: File | null) => {
+    if (!confUid) {
+      toaster.create({
+        title: 'No character selected',
+        description: 'Select a character preset first, then upload its chat image.',
+        type: 'warning',
+        duration: 2500,
+      });
+      return;
+    }
+    if (!file) return;
+
+    // Use data URL so it works for GIF/WebP/APNG/etc (and works offline).
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.readAsDataURL(file);
+    });
+
+    setChatAvatarForConfUid(confUid, dataUrl);
+  }, [confUid, setChatAvatarForConfUid]);
+
   return (
     <Stack {...settingStyles.common.container}>
       <SelectField
@@ -253,6 +305,86 @@ function General({ onSave, onCancel }: GeneralProps): JSX.Element {
         collection={collections.characterPresets}
         placeholder={confName || t("settings.general.characterPreset")}
       />
+
+      <Stack gap={3}>
+        <Flex align="center" justify="space-between" gap={3}>
+          <Text {...settingStyles.general.field.label}>
+            Character chat image
+          </Text>
+          <Button
+            size="xs"
+            variant="ghost"
+            color="whiteAlpha.800"
+            _hover={{ bg: 'whiteAlpha.200' }}
+            onClick={() => {
+              if (confUid) clearChatAvatarForConfUid(confUid);
+            }}
+            isDisabled={!confUid || !currentChatAvatar}
+          >
+            Clear
+          </Button>
+        </Flex>
+
+        <InputField
+          label="Image URL / Data URL"
+          value={currentChatAvatar}
+          onChange={handleChatAvatarUrlChange}
+          placeholder="Paste an image URL, or upload a file below"
+          help="Used by the Chat view to show the character picture. Supports animated images (GIF/WebP/APNG) when provided as URL or uploaded as a data URL."
+        />
+
+        <Flex gap={3} align="center" flexWrap="wrap">
+          <input
+            ref={avatarFileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0] ?? null;
+              await handleChatAvatarFileChange(file);
+              // allow re-selecting the same file
+              // eslint-disable-next-line no-param-reassign
+              e.target.value = '';
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => avatarFileInputRef.current?.click()}
+            isDisabled={!confUid}
+          >
+            Upload image…
+          </Button>
+          <Text fontSize="xs" color="whiteAlpha.700">
+            Stored locally for this character.
+          </Text>
+        </Flex>
+
+        <Box
+          width="120px"
+          height="120px"
+          borderRadius="lg"
+          overflow="hidden"
+          border="1px solid"
+          borderColor="whiteAlpha.200"
+          bg="blackAlpha.400"
+        >
+          {currentChatAvatar ? (
+            <Image
+              src={currentChatAvatar}
+              alt="Character chat image preview"
+              width="100%"
+              height="100%"
+              objectFit="cover"
+            />
+          ) : (
+            <Flex width="100%" height="100%" align="center" justify="center">
+              <Text fontSize="xs" color="whiteAlpha.700">
+                No image
+              </Text>
+            </Flex>
+          )}
+        </Box>
+      </Stack>
 
       <DialogRoot
         open={isCharacterEditorOpen}

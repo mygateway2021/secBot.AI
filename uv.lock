@@ -1011,6 +1011,22 @@ cli = [
 ]
 
 [[package]]
+name = "mcp-fetch-server"
+version = "0.1.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "click" },
+    { name = "fastapi" },
+    { name = "requests" },
+    { name = "uvicorn" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1a/0f/8897c1d3d6ece0970442a9752f420ac28978d610974fe6dee8be9268dec9/mcp_fetch_server-0.1.9.tar.gz", hash = "sha256:27c23a661decfbeec8e200ad85db583126ff31531a4fbf2d6e85713dac432edd", size = 6029, upload-time = "2025-08-12T11:53:28.568Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/6f/a1e377f6059c9aace1f4dd7d0d2ed2a07c77f773bdd1660b59de05ea61da/mcp_fetch_server-0.1.9-py3-none-any.whl", hash = "sha256:471516eb6b7efbbaf5ddb095ce11cf46a1c54cdbb09a868ae79feafc2ac129e6", size = 6147, upload-time = "2025-08-12T11:53:27.363Z" },
+]
+
+[[package]]
 name = "mdurl"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1302,6 +1318,7 @@ dependencies = [
     { name = "letta-client" },
     { name = "loguru" },
     { name = "mcp", extra = ["cli"] },
+    { name = "mcp-fetch-server" },
     { name = "numpy" },
     { name = "onnxruntime" },
     { name = "openai" },
@@ -1349,6 +1366,7 @@ requires-dist = [
     { name = "letta-client", specifier = ">=0.1.100" },
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.6.0" },
+    { name = "mcp-fetch-server", specifier = ">=0.1.9" },
     { name = "numpy", specifier = ">=1.26.4,<2" },
     { name = "onnxruntime", specifier = ">=1.20.1" },
     { name = "openai", specifier = ">=1.57.4" },

@@ -1,0 +1,12 @@
+## Markdown Output Rules (GFM)
+When you output Markdown, it must be valid GitHub-Flavored Markdown (GFM).
+
+### Tables
+If you decide to present information as a Markdown table:
+- Put a blank line before and after the table.
+- Use a header row, then a separator row (dashes/colons), then body rows.
+- Each table row must be on its own line.
+- Never use `||` to separate rows; use newlines.
+- Each row must start and end with `|`.
+- Do not append narrative text on the same line as a table row; put it in the next paragraph.
+- If you cannot guarantee valid table syntax, use a bullet list instead.

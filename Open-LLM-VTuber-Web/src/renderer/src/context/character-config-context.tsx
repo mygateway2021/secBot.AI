@@ -1,6 +1,7 @@
 import {
   createContext, useContext, useState, useMemo, useEffect, useCallback,
 } from 'react';
+import { useLocalStorage } from '@/hooks/utils/use-local-storage';
 
 /**
  * Character configuration file interface
@@ -19,10 +20,14 @@ interface CharacterConfigState {
   confName: string;
   confUid: string;
   configFiles: ConfigFile[];
+  chatAvatarByConfUid: Record<string, string>;
   setConfName: (name: string) => void;
   setConfUid: (uid: string) => void;
   setConfigFiles: (files: ConfigFile[]) => void;
   getFilenameByName: (name: string) => string | undefined;
+  getChatAvatarForConfUid: (uid: string) => string;
+  setChatAvatarForConfUid: (uid: string, src: string) => void;
+  clearChatAvatarForConfUid: (uid: string) => void;
 }
 
 /**
@@ -32,6 +37,7 @@ const DEFAULT_CONFIG = {
   confName: '',
   confUid: '',
   configFiles: [] as ConfigFile[],
+  chatAvatarByConfUid: {} as Record<string, string>,
 };
 
 /**
@@ -48,11 +54,34 @@ export function CharacterConfigProvider({ children }: { children: React.ReactNod
   const [confName, setConfName] = useState<string>(DEFAULT_CONFIG.confName);
   const [confUid, setConfUid] = useState<string>(DEFAULT_CONFIG.confUid);
   const [configFiles, setConfigFiles] = useState<ConfigFile[]>(DEFAULT_CONFIG.configFiles);
+  const [chatAvatarByConfUid, setChatAvatarByConfUid] = useLocalStorage<Record<string, string>>(
+    'chatAvatarByConfUid',
+    DEFAULT_CONFIG.chatAvatarByConfUid,
+  );
 
   const getFilenameByName = useCallback(
     (name: string) => configFiles.find((config) => config.name === name)?.filename,
     [configFiles],
   );
+
+  const getChatAvatarForConfUid = useCallback(
+    (uid: string) => chatAvatarByConfUid[uid] ?? '',
+    [chatAvatarByConfUid],
+  );
+
+  const setChatAvatarForConfUid = useCallback((uid: string, src: string) => {
+    setChatAvatarByConfUid((prev) => ({
+      ...prev,
+      [uid]: src,
+    }));
+  }, [setChatAvatarByConfUid]);
+
+  const clearChatAvatarForConfUid = useCallback((uid: string) => {
+    setChatAvatarByConfUid((prev) => {
+      const { [uid]: _removed, ...rest } = prev;
+      return rest;
+    });
+  }, [setChatAvatarByConfUid]);
 
   // Memoized context value
   const contextValue = useMemo(
@@ -60,12 +89,25 @@ export function CharacterConfigProvider({ children }: { children: React.ReactNod
       confName,
       confUid,
       configFiles,
+      chatAvatarByConfUid,
       setConfName,
       setConfUid,
       setConfigFiles,
       getFilenameByName,
+      getChatAvatarForConfUid,
+      setChatAvatarForConfUid,
+      clearChatAvatarForConfUid,
     }),
-    [confName, confUid, configFiles, getFilenameByName],
+    [
+      confName,
+      confUid,
+      configFiles,
+      chatAvatarByConfUid,
+      getFilenameByName,
+      getChatAvatarForConfUid,
+      setChatAvatarForConfUid,
+      clearChatAvatarForConfUid,
+    ],
   );
 
   useEffect(() => {

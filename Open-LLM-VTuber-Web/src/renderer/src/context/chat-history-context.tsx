@@ -13,6 +13,8 @@ interface ChatHistoryState {
   messages: Message[]; // Use the unified Message type
   historyList: HistoryInfo[];
   currentHistoryUid: string | null;
+  currentSpeakerName: string;
+  currentSpeakerAvatar: string;
   appendHumanMessage: (content: string) => void;
   appendAIMessage: (content: string, name?: string, avatar?: string) => void;
   appendOrUpdateToolCallMessage: (toolMessageData: Partial<Message>) => void; // Accept partial data
@@ -36,6 +38,8 @@ const DEFAULT_HISTORY = {
   messages: [] as Message[],
   historyList: [] as HistoryInfo[],
   currentHistoryUid: null as string | null,
+  currentSpeakerName: '',
+  currentSpeakerAvatar: '',
   fullResponse: '',
 };
 
@@ -58,6 +62,8 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
   const [currentHistoryUid, setCurrentHistoryUid] = useState<string | null>(
     DEFAULT_HISTORY.currentHistoryUid,
   );
+  const [currentSpeakerName, setCurrentSpeakerName] = useState<string>(DEFAULT_HISTORY.currentSpeakerName);
+  const [currentSpeakerAvatar, setCurrentSpeakerAvatar] = useState<string>(DEFAULT_HISTORY.currentSpeakerAvatar);
   const [fullResponse, setFullResponse] = useState(DEFAULT_HISTORY.fullResponse);
   const [forceNewMessage, setForceNewMessage] = useState<boolean>(false);
 
@@ -81,6 +87,9 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
    * @param content - Message content
    */
   const appendAIMessage = useCallback((content: string, name?: string, avatar?: string) => {
+    if (name) setCurrentSpeakerName(name);
+    if (avatar) setCurrentSpeakerAvatar(avatar);
+
     setMessages((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
 
@@ -205,6 +214,8 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       messages,
       historyList,
       currentHistoryUid,
+      currentSpeakerName,
+      currentSpeakerAvatar,
       appendHumanMessage,
       appendAIMessage,
       appendOrUpdateToolCallMessage, // Add to context value
@@ -222,6 +233,8 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       messages,
       historyList,
       currentHistoryUid,
+      currentSpeakerName,
+      currentSpeakerAvatar,
       appendHumanMessage,
       appendAIMessage,
       appendOrUpdateToolCallMessage, // Add dependency
