@@ -72,6 +72,7 @@ export default function ChatPage(): JSX.Element {
     messages,
     currentSpeakerName,
     currentSpeakerAvatar,
+    ragReferences,
   } = useChatHistory();
 
   const {
@@ -487,6 +488,59 @@ export default function ChatPage(): JSX.Element {
                       >
                         {displayContent}
                       </ReactMarkdown>
+                      
+                      {/* Display RAG References */}
+                      {ragReferences && ragReferences.length > 0 && (
+                        <Box
+                          mt={6}
+                          pt={4}
+                          borderTop="1px solid"
+                          borderColor="whiteAlpha.200"
+                        >
+                          <Text
+                            fontSize="sm"
+                            fontWeight="semibold"
+                            color="blue.300"
+                            mb={3}
+                          >
+                            📚 Referenced Knowledge Base Entries
+                          </Text>
+                          <Flex direction="column" gap={2}>
+                            {ragReferences.map((ref, index) => (
+                              <Box
+                                key={ref.chunk_id || index}
+                                p={3}
+                                bg="blackAlpha.400"
+                                borderRadius="md"
+                                border="1px solid"
+                                borderColor="whiteAlpha.100"
+                              >
+                                <Text
+                                  fontSize="xs"
+                                  fontWeight="semibold"
+                                  color="blue.200"
+                                  mb={1}
+                                >
+                                  {ref.document}
+                                </Text>
+                                <Text
+                                  fontSize="xs"
+                                  color="whiteAlpha.700"
+                                  lineHeight="1.6"
+                                  css={{
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 3,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden',
+                                  }}
+                                >
+                                  {ref.text}
+                                </Text>
+                              </Box>
+                            ))}
+                          </Flex>
+                        </Box>
+                      )}
                     </Box>
                   ) : (
                     <Text fontSize="md" color="whiteAlpha.700">

@@ -25,9 +25,15 @@ async def create_batch_input(
     kb_manager=None,
     conf_uid: Optional[str] = None,
     kb_config=None,
-) -> BatchInput:
-    """Create batch input for agent processing with optional KB retrieval"""
+) -> tuple[BatchInput, Optional[List[Dict]]]:
+    """
+    Create batch input for agent processing with optional KB retrieval.
+    
+    Returns:
+        Tuple of (BatchInput, Optional RAG results list)
+    """
     texts = [TextData(source=TextSource.INPUT, content=input_text, from_name=from_name)]
+    rag_results = None  # Store RAG results for frontend display
 
     # Inject KB context if enabled
     logger.debug(
@@ -60,6 +66,8 @@ async def create_batch_input(
                         from_name=None,
                     ),
                 )
+                # Store RAG results for frontend display
+                rag_results = results
                 logger.info(
                     f"✅ KB RAG: Injected {len(results)} results ({len(formatted_context)} chars) into context"
                 )
@@ -93,7 +101,7 @@ async def create_batch_input(
                 ),
             )
 
-    return BatchInput(
+    batch_input = BatchInput(
         texts=texts,
         images=[
             ImageData(
@@ -107,6 +115,8 @@ async def create_batch_input(
         else None,
         metadata=metadata,
     )
+    
+    return batch_input, rag_results
 
 
 async def process_agent_output(

@@ -87,6 +87,11 @@ export interface MessageEvent {
   forwarded?: boolean;
   display_text?: DisplayText;
   live2d_model?: string;
+  references?: Array<{
+    document: string;
+    text: string;
+    chunk_id: string;
+  }>;
   browser_view?: {
     debuggerFullscreenUrl: string;
     debuggerUrl: string;

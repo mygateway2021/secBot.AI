@@ -75,7 +75,7 @@ async def process_single_conversation(
             logger.debug("📚 No KB manager in context")
 
         # Create batch input with KB retrieval
-        batch_input = await create_batch_input(
+        batch_input, rag_results = await create_batch_input(
             input_text=input_text,
             images=images,
             from_name=context.character_config.human_name,
@@ -84,6 +84,23 @@ async def process_single_conversation(
             conf_uid=context.character_config.conf_uid,
             kb_config=kb_config,
         )
+        
+        # Send RAG references to frontend if available (for UI display only)
+        if rag_results:
+            # Format RAG results for frontend display
+            rag_references = []
+            for result in rag_results:
+                rag_references.append({
+                    "document": result.get("original_filename", result.get("filename", "Unknown")),
+                    "text": result.get("text", ""),
+                    "chunk_id": result.get("chunk_id", ""),
+                })
+            
+            await websocket_send(json.dumps({
+                "type": "rag-references",
+                "references": rag_references
+            }))
+            logger.debug(f"📚 Sent {len(rag_references)} RAG references to frontend")
 
         # Store user message (check if we should skip storing to history)
         skip_history = metadata and metadata.get("skip_history", False)

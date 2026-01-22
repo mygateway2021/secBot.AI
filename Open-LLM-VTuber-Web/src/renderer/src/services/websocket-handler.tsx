@@ -37,6 +37,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
     appendHumanMessage,
     appendOrUpdateToolCallMessage,
     clearCurrentSpeaker,
+    setRagReferences,
   } = useChatHistory();
   const { addAudioTask } = useAudioTask();
   const bgUrlContext = useBgUrl();
@@ -78,6 +79,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
         setAiState('thinking-speaking');
         audioTaskQueue.clearQueue();
         clearResponse();
+        setRagReferences([]); // Clear RAG references from previous conversation
         break;
       case 'conversation-chain-end':
         audioTaskQueue.addTask(() => new Promise<void>((resolve) => {
@@ -97,7 +99,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
       default:
         console.warn('Unknown control command:', controlText);
     }
-  }, [setAiState, clearResponse, setForceNewMessage, startMic, stopMic]);
+  }, [setAiState, clearResponse, setForceNewMessage, startMic, stopMic, setRagReferences]);
 
   const handleWebSocketMessage = useCallback((message: MessageEvent) => {
     console.log('Received message from server:', message);
@@ -364,10 +366,16 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
           console.warn('Received incomplete tool_call_status message:', message);
         }
         break;
+      case 'rag-references':
+        if (message.references) {
+          console.log('RAG references received:', message.references);
+          setRagReferences(message.references);
+        }
+        break;
       default:
         console.warn('Unknown message type:', message.type);
     }
-  }, [aiState, addAudioTask, appendHumanMessage, baseUrl, bgUrlContext, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, setSubtitleText, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t, setDiaries, addDiary, updateDiary, removeDiary]);
+  }, [aiState, addAudioTask, appendHumanMessage, baseUrl, bgUrlContext, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, setSubtitleText, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t, setDiaries, addDiary, updateDiary, removeDiary, setRagReferences]);
 
   useEffect(() => {
     wsService.connect(wsUrl);

@@ -23,6 +23,12 @@ function normalizeMessageIds(input: Message[]): Message[] {
   });
 }
 
+export interface RagReference {
+  document: string;
+  text: string;
+  chunk_id: string;
+}
+
 /**
  * Chat history context state interface
  * @interface ChatHistoryState
@@ -33,6 +39,7 @@ interface ChatHistoryState {
   currentHistoryUid: string | null;
   currentSpeakerName: string;
   currentSpeakerAvatar: string;
+  ragReferences: RagReference[]; // Current RAG references for display
   clearCurrentSpeaker: () => void;
   appendHumanMessage: (content: string) => void;
   appendAIMessage: (content: string, name?: string, avatar?: string) => void;
@@ -49,6 +56,7 @@ interface ChatHistoryState {
   appendResponse: (text: string) => void;
   clearResponse: () => void;
   setForceNewMessage: (value: boolean) => void;
+  setRagReferences: (refs: RagReference[]) => void;
 }
 
 /**
@@ -61,6 +69,7 @@ const DEFAULT_HISTORY = {
   currentSpeakerName: '',
   currentSpeakerAvatar: '',
   fullResponse: '',
+  ragReferences: [] as RagReference[],
 };
 
 /**
@@ -86,6 +95,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
   const [currentSpeakerAvatar, setCurrentSpeakerAvatar] = useState<string>(DEFAULT_HISTORY.currentSpeakerAvatar);
   const [fullResponse, setFullResponse] = useState(DEFAULT_HISTORY.fullResponse);
   const [forceNewMessage, setForceNewMessage] = useState<boolean>(false);
+  const [ragReferences, setRagReferences] = useState<RagReference[]>(DEFAULT_HISTORY.ragReferences);
 
   const setMessages = useCallback((nextMessages: Message[]) => {
     _setMessages(normalizeMessageIds(nextMessages));
@@ -249,6 +259,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       currentHistoryUid,
       currentSpeakerName,
       currentSpeakerAvatar,
+      ragReferences,
       clearCurrentSpeaker,
       appendHumanMessage,
       appendAIMessage,
@@ -263,6 +274,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       appendResponse,
       clearResponse,
       setForceNewMessage,
+      setRagReferences,
     }),
     [
       messages,
@@ -270,6 +282,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       currentHistoryUid,
       currentSpeakerName,
       currentSpeakerAvatar,
+      ragReferences,
       clearCurrentSpeaker,
       appendHumanMessage,
       appendAIMessage,
