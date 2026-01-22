@@ -71,6 +71,7 @@ export interface MessageEvent {
   uids?: string[];
   messages?: Message[];
   history_uid?: string;
+  message_id?: string;
   success?: boolean;
   histories?: HistoryInfo[];
   diaries?: DiaryEntry[];

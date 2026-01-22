@@ -33,7 +33,7 @@ export interface RepeatConfig {
   weekdays?: number[];
 }
 
-interface RecurringTodo {
+export interface RecurringTodo {
   id: string;
   text: string;
   repeat: Exclude<RepeatPattern, 'none'>;
@@ -137,6 +137,7 @@ const isRecurringDueOn = (date: string, recurring: RecurringTodo): boolean => {
 export const useDailyLife = (_options?: DailyLifeOptions) => {
   const { t, i18n } = useTranslation();
   const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [recurringTodos, setRecurringTodos] = useState<RecurringTodo[]>([]);
   const [currentDate, setCurrentDate] = useState<string>('');
   // Always use offline backend
   const backend = 'offline';
@@ -167,6 +168,10 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
     localStorage.setItem(RECURRING_STORAGE_KEY, JSON.stringify(items));
   }, []);
 
+  const reloadRecurringTodos = useCallback(() => {
+    setRecurringTodos(loadRecurringTodos());
+  }, [loadRecurringTodos]);
+
   // Get current date in YYYY-MM-DD format
   const getCurrentDate = useCallback(() => {
     return new Date().toISOString().split('T')[0];
@@ -190,6 +195,7 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
         const data: DailySchedule = JSON.parse(stored);
         const storedItems = data.items ?? [];
         const recurring = loadRecurringTodos();
+        setRecurringTodos(recurring);
         const existingRecurringIds = new Set(storedItems.map((item) => item.recurring_id).filter(Boolean) as string[]);
 
         const recurringInstances: TodoItem[] = [];
@@ -211,6 +217,7 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
       } catch (e) {
         console.error('Error loading todos:', e);
         const recurring = loadRecurringTodos();
+        setRecurringTodos(recurring);
         const recurringInstances = recurring
           .filter((r) => isRecurringDueOn(date, r))
           .slice(0, MAX_TODO_ITEMS)
@@ -227,6 +234,7 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
       }
     } else {
       const recurring = loadRecurringTodos();
+      setRecurringTodos(recurring);
       const recurringInstances = recurring
         .filter((r) => isRecurringDueOn(date, r))
         .slice(0, MAX_TODO_ITEMS)
@@ -253,6 +261,46 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
     localStorage.setItem(key, JSON.stringify(data));
     setTodos(items);
   }, [currentDate]);
+
+  const updateRecurringTodo = useCallback(async (
+    id: string,
+    updates: Partial<Pick<RecurringTodo, 'text' | 'repeat' | 'repeat_config'>>
+  ) => {
+    const recurring = loadRecurringTodos();
+    const nextRecurring = recurring.map((r) => {
+      if (r.id !== id) return r;
+
+      const nextText = typeof updates.text === 'string' ? updates.text.slice(0, MAX_ITEM_LENGTH) : r.text;
+      const nextRepeat = updates.repeat ?? r.repeat;
+      const nextConfig = Object.prototype.hasOwnProperty.call(updates, 'repeat_config')
+        ? updates.repeat_config
+        : r.repeat_config;
+
+      return {
+        ...r,
+        text: nextText,
+        repeat: nextRepeat,
+        repeat_config: nextConfig,
+      };
+    });
+
+    saveRecurringTodos(nextRecurring);
+    setRecurringTodos(nextRecurring);
+
+    // Update any loaded instances for the current day.
+    const nextTodos = todos.map((todo) => {
+      if (todo.recurring_id !== id) return todo;
+      const updated = nextRecurring.find((r) => r.id === id);
+      if (!updated) return todo;
+      return {
+        ...todo,
+        text: updated.text,
+        repeat: updated.repeat,
+        repeat_config: updated.repeat_config,
+      };
+    });
+    saveTodos(nextTodos);
+  }, [loadRecurringTodos, saveRecurringTodos, saveTodos, todos]);
 
   // Add todo
   const addTodo = useCallback(async (
@@ -292,7 +340,9 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
     };
 
     const recurring = loadRecurringTodos();
-    saveRecurringTodos([...recurring, recurringTodo]);
+    const nextRecurring = [...recurring, recurringTodo];
+    saveRecurringTodos(nextRecurring);
+    setRecurringTodos(nextRecurring);
 
     const instance: TodoItem = {
       id: `${recurringId}:${today}`,
@@ -334,7 +384,9 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
 
       if (stopRecurring) {
         // Stop repeating entirely.
-        saveRecurringTodos(recurring.filter((r) => r.id !== target.recurring_id));
+        const nextRecurring = recurring.filter((r) => r.id !== target.recurring_id);
+        saveRecurringTodos(nextRecurring);
+        setRecurringTodos(nextRecurring);
         newTodos = newTodos.filter((todo) => todo.recurring_id !== target.recurring_id);
       } else {
         // Delete only today's occurrence and mark it skipped so it won't reappear on reload.
@@ -349,6 +401,7 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
           return { ...r, skipped_dates: [...skipped] };
         });
         saveRecurringTodos(nextRecurring);
+        setRecurringTodos(nextRecurring);
       }
     }
 
@@ -442,6 +495,9 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
     backend,
     setBackend,
     todos,
+    recurringTodos,
+    reloadRecurringTodos,
+    updateRecurringTodo,
     addTodo,
     toggleTodo,
     deleteTodo,

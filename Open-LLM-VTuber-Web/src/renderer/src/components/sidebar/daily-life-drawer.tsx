@@ -30,7 +30,12 @@ import {
   SelectTrigger,
   SelectValueText,
 } from '@/components/ui/select';
-import { useDailyLife, type RepeatConfig, type RepeatPattern } from '@/hooks/sidebar/use-daily-life';
+import {
+  useDailyLife,
+  type RepeatConfig,
+  type RepeatPattern,
+  type RecurringTodo,
+} from '@/hooks/sidebar/use-daily-life';
 import { usePomodoroTimer } from '@/hooks/sidebar/use-pomodoro-timer';
 import { useWebSocket } from '@/context/websocket-context';
 import { toaster } from '../ui/toaster';
@@ -48,15 +53,23 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
   const [intervalValue, setIntervalValue] = useState<string>('2');
   const [weekdays, setWeekdays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [pomodoroDuration, setPomodoroDuration] = useState<number>(25);
+  const [showRepeatTodos, setShowRepeatTodos] = useState(false);
+  const [repeatDrafts, setRepeatDrafts] = useState<Record<string, {
+    text: string;
+    repeat: Exclude<RepeatPattern, 'none'>;
+    intervalValue: string;
+    weekdays: number[];
+  }>>({});
   const { sendMessage, baseUrl } = useWebSocket();
   
   const {
     todos,
+    recurringTodos,
     addTodo,
     toggleTodo,
     deleteTodo,
     clearCompleted,
-    clearAll,
+    updateRecurringTodo,
     updateTodoTimer,
     formatScheduleForChat,
     stats,
@@ -264,6 +277,20 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
     setWeekdays((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort((a, b) => a - b)));
   };
 
+  const initRepeatDraft = (r: RecurringTodo) => {
+    const interval = r.repeat_config?.interval;
+    return {
+      text: r.text,
+      repeat: r.repeat,
+      intervalValue: typeof interval === 'number' && interval > 0 ? String(interval) : '2',
+      weekdays: r.repeat_config?.weekdays ?? [1, 2, 3, 4, 5],
+    };
+  };
+
+  const getRepeatDraft = (r: RecurringTodo) => {
+    return repeatDrafts[r.id] ?? initRepeatDraft(r);
+  };
+
   const formatRepeatLabel = (pattern: RepeatPattern, config?: RepeatConfig): string => {
     if (!pattern || pattern === 'none') return '';
 
@@ -311,23 +338,32 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
     }
   };
 
-  const handleClearAll = async () => {
-    if (todos.length === 0) {
-      toaster.create({
-        title: t('dailyLife.noTasksToClear'),
-        type: 'info',
-        duration: 1500,
-      });
-      return;
-    }
+  const handleSaveRecurring = async (r: RecurringTodo) => {
+    const draft = getRepeatDraft(r);
+    const interval = Math.max(1, Math.floor(Number(draft.intervalValue || '1')));
+    const repeatConfig: RepeatConfig | undefined = (() => {
+      if (draft.repeat === 'interval_days') return { interval };
+      if (draft.repeat === 'weekly_days') return { weekdays: draft.weekdays };
+      if (draft.repeat === 'interval_weeks') return { interval, weekdays: draft.weekdays };
+      return undefined;
+    })();
 
-    // eslint-disable-next-line no-alert
-    if (window.confirm(t('dailyLife.confirmClearAll'))) {
-      await clearAll();
+    try {
+      await updateRecurringTodo(r.id, {
+        text: draft.text,
+        repeat: draft.repeat,
+        repeat_config: repeatConfig,
+      });
       toaster.create({
-        title: t('dailyLife.allTasksCleared'),
+        title: t('dailyLife.savedRepeatTodo'),
         type: 'success',
         duration: 1500,
+      });
+    } catch {
+      toaster.create({
+        title: t('dailyLife.failedRepeatTodo'),
+        type: 'error',
+        duration: 2000,
       });
     }
   };
@@ -367,6 +403,10 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+  });
+
+  const recurringRepeatOptions = createListCollection({
+    items: repeatOptions.items.filter((x) => x.value !== 'none'),
   });
 
   return (
@@ -700,16 +740,143 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
                   {t('dailyLife.clearCompleted')}
                 </Button>
                 <Button
-                  onClick={handleClearAll}
+                  onClick={() => setShowRepeatTodos((v) => !v)}
                   variant="outline"
-                  colorPalette="red"
                   flex={1}
                   size="sm"
                 >
-                  {t('dailyLife.clearAll')}
+                  {showRepeatTodos ? t('dailyLife.hideRepeatTodos') : t('dailyLife.showRepeatTodos')}
                 </Button>
               </HStack>
             </VStack>
+
+            {/* Repeat Todos Manager */}
+            {showRepeatTodos && (
+              <Box mt={4} p={3} bg="whiteAlpha.50" borderRadius="md">
+                <Text fontWeight="bold" mb={2} color="blue.300">
+                  {t('dailyLife.repeatTodosTitle')}
+                </Text>
+
+                {recurringTodos.length === 0 ? (
+                  <Text fontSize="sm" color="whiteAlpha.700">
+                    {t('dailyLife.noRepeatTodos')}
+                  </Text>
+                ) : (
+                  <VStack gap={3} alignItems="stretch">
+                    {recurringTodos.map((r) => {
+                      const draft = getRepeatDraft(r);
+                      return (
+                        <Box key={r.id} p={3} bg="whiteAlpha.100" borderRadius="md">
+                          <VStack gap={2} alignItems="stretch">
+                            <Input
+                              value={draft.text}
+                              onChange={(e) => {
+                                const nextText = e.target.value.slice(0, MAX_ITEM_LENGTH);
+                                setRepeatDrafts((prev) => ({
+                                  ...prev,
+                                  [r.id]: { ...draft, text: nextText },
+                                }));
+                              }}
+                              bg="whiteAlpha.100"
+                              border="none"
+                              color="white"
+                              _placeholder={{ color: 'whiteAlpha.400' }}
+                            />
+
+                            <HStack gap={2} alignItems="center">
+                              <SelectRoot
+                                collection={recurringRepeatOptions}
+                                value={[draft.repeat]}
+                                onValueChange={(e) => {
+                                  const next = e.value[0];
+                                  if (!next) return;
+                                  setRepeatDrafts((prev) => ({
+                                    ...prev,
+                                    [r.id]: { ...draft, repeat: next as Exclude<RepeatPattern, 'none'> },
+                                  }));
+                                }}
+                                size="sm"
+                                width="220px"
+                                positioning={{ sameWidth: true }}
+                              >
+                                <SelectTrigger bg="whiteAlpha.100" border="none" color="white">
+                                  <SelectValueText placeholder={t('dailyLife.repeatLabel')} />
+                                </SelectTrigger>
+                                <SelectContent portalled={false}>
+                                  {recurringRepeatOptions.items.map((item) => (
+                                    <SelectItem key={item.value} item={item}>
+                                      {item.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </SelectRoot>
+
+                              <Button size="sm" onClick={() => void handleSaveRecurring(r)}>
+                                {t('common.save')}
+                              </Button>
+                            </HStack>
+
+                            {(draft.repeat === 'interval_days' || draft.repeat === 'interval_weeks') && (
+                              <HStack gap={2} alignItems="center">
+                                <Text fontSize="xs" color="whiteAlpha.700" minW="80px">
+                                  {t('dailyLife.intervalLabel')}
+                                </Text>
+                                <Input
+                                  value={draft.intervalValue}
+                                  onChange={(e) => {
+                                    const cleaned = e.target.value.replace(/[^0-9]/g, '');
+                                    setRepeatDrafts((prev) => ({
+                                      ...prev,
+                                      [r.id]: { ...draft, intervalValue: cleaned },
+                                    }));
+                                  }}
+                                  placeholder="2"
+                                  width="80px"
+                                  bg="whiteAlpha.100"
+                                  border="none"
+                                  color="white"
+                                  _placeholder={{ color: 'whiteAlpha.400' }}
+                                />
+                                <Text fontSize="xs" color="whiteAlpha.700">
+                                  {draft.repeat === 'interval_days' ? t('dailyLife.days') : t('dailyLife.weeks')}
+                                </Text>
+                              </HStack>
+                            )}
+
+                            {(draft.repeat === 'weekly_days' || draft.repeat === 'interval_weeks') && (
+                              <HStack gap={2} flexWrap="wrap">
+                                <Text fontSize="xs" color="whiteAlpha.700" minW="80px">
+                                  {t('dailyLife.selectWeekdays')}
+                                </Text>
+                                {weekdayLabels.map((label, idx) => (
+                                  <HStack key={`${r.id}-${label}`} gap={1} px={1}>
+                                    <Checkbox
+                                      checked={draft.weekdays.includes(idx)}
+                                      onCheckedChange={() => {
+                                        const nextWeekdays = draft.weekdays.includes(idx)
+                                          ? draft.weekdays.filter((d) => d !== idx)
+                                          : [...draft.weekdays, idx].sort((a, b) => a - b);
+                                        setRepeatDrafts((prev) => ({
+                                          ...prev,
+                                          [r.id]: { ...draft, weekdays: nextWeekdays },
+                                        }));
+                                      }}
+                                    />
+                                    <Text fontSize="xs" color="whiteAlpha.800">
+                                      {label}
+                                    </Text>
+                                  </HStack>
+                                ))}
+                              </HStack>
+                            )}
+                          </VStack>
+                        </Box>
+                      );
+                    })}
+                  </VStack>
+                )}
+              </Box>
+            )}
 
             {/* Preview */}
             {todos.length > 0 && (

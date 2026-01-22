@@ -152,6 +152,7 @@
     "screen": "Screen",
     "browser": "Browser",
     "live": "Live",
+    "deleteMessage": "Delete",
     "noMessages": "No messages yet. Start a conversation!",
     "noBrowserSession": "No active browser session",
     "browserSession": "Browser Session"
@@ -224,6 +225,12 @@
     "addToChat": "Add to Chat",
     "clearCompleted": "Clear Completed",
     "clearAll": "Clear All",
+    "showRepeatTodos": "Show Repeat Todos",
+    "hideRepeatTodos": "Hide Repeat Todos",
+    "repeatTodosTitle": "Repeating Tasks",
+    "noRepeatTodos": "No repeating tasks",
+    "savedRepeatTodo": "Repeat task updated",
+    "failedRepeatTodo": "Failed to update repeat task",
     "previewTitle": "Preview (will be sent to AI):",
     "taskAdded": "Task added!",
     "pleaseEnterTask": "Please enter a task",
@@ -267,6 +274,7 @@
     "newChatHistory": "New chat history created",
     "historyDeleteSuccess": "History deleted successfully",
     "historyDeleteFail": "Failed to delete history",
+    "messageDeleteFail": "Failed to delete message",
     "diaryGenerated": "Diary generated",
     "diaryUpdated": "Diary updated",
     "diaryDeleted": "Diary deleted"

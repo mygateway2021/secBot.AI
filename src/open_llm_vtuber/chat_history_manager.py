@@ -8,12 +8,38 @@ from loguru import logger
 
 
 class HistoryMessage(TypedDict):
+    id: str
     role: Literal["human", "ai"]
     timestamp: str
     content: str
     # Optional display information for the message
     name: Optional[str]
     avatar: Optional[str]
+
+
+def _ensure_message_ids(history_data: list[dict]) -> tuple[list[dict], bool]:
+    """Ensure every non-metadata message has a unique, non-empty id.
+
+    Returns:
+        A tuple of (possibly mutated history_data, changed_flag).
+    """
+
+    changed = False
+    used: set[str] = set()
+    for item in history_data:
+        if item.get("role") == "metadata":
+            continue
+
+        raw_id = item.get("id")
+        msg_id = str(raw_id).strip() if raw_id is not None else ""
+        if not msg_id or msg_id in used:
+            msg_id = uuid.uuid4().hex
+            item["id"] = msg_id
+            changed = True
+
+        used.add(msg_id)
+
+    return history_data, changed
 
 
 def _is_safe_filename(filename: str) -> bool:
@@ -129,6 +155,7 @@ def store_message(
 
     now_str = datetime.now().isoformat(timespec="seconds")
     new_item = {
+        "id": uuid.uuid4().hex,
         "role": role,
         "timestamp": now_str,
         "content": content,
@@ -224,10 +251,61 @@ def get_history(conf_uid: str, history_uid: str) -> List[HistoryMessage]:
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             history_data = json.load(f)
-            # Filter out metadata
-            return [msg for msg in history_data if msg["role"] != "metadata"]
+
+        history_data, changed = _ensure_message_ids(history_data)
+        if changed:
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(history_data, f, ensure_ascii=False, indent=2)
+
+        # Filter out metadata
+        return [msg for msg in history_data if msg["role"] != "metadata"]
     except Exception:
         return []
+
+
+def delete_message(conf_uid: str, history_uid: str, message_id: str) -> bool:
+    """Delete a single message by id from a specific history file.
+
+    Args:
+        conf_uid: Configuration unique identifier
+        history_uid: History unique identifier
+        message_id: Message unique identifier
+
+    Returns:
+        True if a message was deleted; False otherwise.
+    """
+
+    if not conf_uid or not history_uid or not message_id:
+        logger.warning("Missing conf_uid/history_uid/message_id")
+        return False
+
+    filepath = _get_safe_history_path(conf_uid, history_uid)
+    if not os.path.exists(filepath):
+        logger.warning(f"History file not found: {filepath}")
+        return False
+
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            history_data = json.load(f)
+
+        history_data, changed = _ensure_message_ids(history_data)
+        before_len = len(history_data)
+        filtered = [
+            msg
+            for msg in history_data
+            if msg.get("role") == "metadata"
+            or str(msg.get("id", "")) != str(message_id)
+        ]
+        deleted = len(filtered) != before_len
+
+        if deleted or changed:
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(filtered, f, ensure_ascii=False, indent=2)
+
+        return deleted
+    except Exception as e:
+        logger.error(f"Failed to delete message: {e}")
+        return False
 
 
 def delete_history(conf_uid: str, history_uid: str) -> bool:

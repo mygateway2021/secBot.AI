@@ -403,6 +403,9 @@ class ServiceContext:
             logger.debug("Agent already initialized with the same config.")
             return
 
+        # Clean up any existing Ollama LLM before creating a new agent
+        self.cleanup_ollama_llm()
+
         system_prompt = await self.construct_system_prompt(persona_prompt)
 
         # Pass avatar to agent factory
@@ -433,6 +436,22 @@ class ServiceContext:
         except Exception as e:
             logger.error(f"Failed to initialize agent: {e}")
             raise
+
+    def cleanup_ollama_llm(self) -> None:
+        """Clean up Ollama LLM instance to free VRAM when switching characters."""
+        if self.agent_engine is None:
+            return
+
+        # Import here to avoid circular dependency
+        from .agent.stateless_llm.ollama_llm import OllamaLLM
+        from .agent.agents.basic_memory_agent import BasicMemoryAgent
+
+        # Check if the agent is BasicMemoryAgent and has an Ollama LLM
+        if isinstance(self.agent_engine, BasicMemoryAgent):
+            llm = getattr(self.agent_engine, "_llm", None)
+            if llm and isinstance(llm, OllamaLLM):
+                logger.info("🧹 Cleaning up Ollama LLM before character switch...")
+                llm.cleanup()
 
     def init_translate(self, translator_config: TranslatorConfig) -> None:
         """Initialize or update the translation engine based on the configuration."""

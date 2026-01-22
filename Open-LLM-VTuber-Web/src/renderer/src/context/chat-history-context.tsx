@@ -5,6 +5,24 @@ import {
 import { Message } from '@/services/websocket-service';
 import { HistoryInfo } from './websocket-context';
 
+function generateMessageId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `msg_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function normalizeMessageIds(input: Message[]): Message[] {
+  const used = new Set<string>();
+  return input.map((msg) => {
+    const rawId = typeof msg.id === 'string' ? msg.id.trim() : '';
+    const nextId = rawId && !used.has(rawId) ? rawId : generateMessageId();
+    used.add(nextId);
+    if (nextId === msg.id) return msg;
+    return { ...msg, id: nextId };
+  });
+}
+
 /**
  * Chat history context state interface
  * @interface ChatHistoryState
@@ -19,6 +37,7 @@ interface ChatHistoryState {
   appendHumanMessage: (content: string) => void;
   appendAIMessage: (content: string, name?: string, avatar?: string) => void;
   appendOrUpdateToolCallMessage: (toolMessageData: Partial<Message>) => void; // Accept partial data
+  deleteMessage: (messageId: string) => void;
   setMessages: (messages: Message[]) => void; // Use the unified Message type
   setHistoryList: (
     value: HistoryInfo[] | ((prev: HistoryInfo[]) => HistoryInfo[])
@@ -56,7 +75,7 @@ export const ChatHistoryContext = createContext<ChatHistoryState | null>(null);
  */
 export function ChatHistoryProvider({ children }: { children: React.ReactNode }) {
   // State management
-  const [messages, setMessages] = useState<Message[]>(DEFAULT_HISTORY.messages);
+  const [messages, _setMessages] = useState<Message[]>(DEFAULT_HISTORY.messages);
   const [historyList, setHistoryList] = useState<HistoryInfo[]>(
     DEFAULT_HISTORY.historyList,
   );
@@ -68,19 +87,27 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
   const [fullResponse, setFullResponse] = useState(DEFAULT_HISTORY.fullResponse);
   const [forceNewMessage, setForceNewMessage] = useState<boolean>(false);
 
+  const setMessages = useCallback((nextMessages: Message[]) => {
+    _setMessages(normalizeMessageIds(nextMessages));
+  }, []);
+
+  const deleteMessage = useCallback((messageId: string) => {
+    _setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== messageId));
+  }, []);
+
   /**
    * Append a human message to the chat history
    * @param content - Message content
    */
   const appendHumanMessage = useCallback((content: string) => {
     const newMessage: Message = {
-      id: Date.now().toString(),
+      id: generateMessageId(),
       content,
       role: 'human',
       type: 'text', // Explicitly set type for human messages
       timestamp: new Date().toISOString(),
     };
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    _setMessages((prevMessages) => [...prevMessages, newMessage]);
   }, []);
 
   const clearCurrentSpeaker = useCallback(() => {
@@ -96,14 +123,14 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
     if (name) setCurrentSpeakerName(name);
     if (avatar) setCurrentSpeakerAvatar(avatar);
 
-    setMessages((prevMessages) => {
+    _setMessages((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
 
       // If forceNewMessage is true or last message is not an AI text message, create new message
       if (forceNewMessage || !lastMessage || lastMessage.role !== 'ai' || lastMessage.type !== 'text') {
         setForceNewMessage(false); // Reset the flag
         return [...prevMessages, {
-          id: Date.now().toString(),
+          id: generateMessageId(),
           content,
           role: 'ai',
           type: 'text', // Explicitly set type for AI text messages
@@ -136,7 +163,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       return;
     }
 
-    setMessages((prevMessages) => {
+    _setMessages((prevMessages) => {
       const existingMessageIndex = prevMessages.findIndex(
         (msg) => msg.type === 'tool_call_status' && msg.tool_id === toolMessageData.tool_id!,
       );
@@ -156,7 +183,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       } else {
         // Append new tool call message
         const newToolMessage: Message = {
-          id: toolMessageData.tool_id!, // Use tool_id as the main ID for uniqueness
+          id: toolMessageData.tool_id!.trim() || generateMessageId(), // Use tool_id when available, otherwise generate
           role: 'ai',
           type: 'tool_call_status',
           name: toolMessageData.name || '',
@@ -226,6 +253,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       appendHumanMessage,
       appendAIMessage,
       appendOrUpdateToolCallMessage, // Add to context value
+      deleteMessage,
       setMessages,
       setHistoryList,
       setCurrentHistoryUid,
@@ -246,6 +274,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       appendHumanMessage,
       appendAIMessage,
       appendOrUpdateToolCallMessage, // Add dependency
+      deleteMessage,
       updateHistoryList,
       fullResponse,
       appendResponse,

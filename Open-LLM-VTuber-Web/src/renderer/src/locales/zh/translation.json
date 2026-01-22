@@ -149,6 +149,7 @@
     "screen": "屏幕",
     "browser": "浏览器",
     "live": "直播",
+    "deleteMessage": "删除",
     "noMessages": "暂无消息。开始对话吧！",
     "noBrowserSession": "无活跃浏览器会话",
     "browserSession": "浏览器会话"
@@ -221,6 +222,12 @@
     "addToChat": "添加到对话",
     "clearCompleted": "清除已完成",
     "clearAll": "全部清除",
+    "showRepeatTodos": "查看重复待办",
+    "hideRepeatTodos": "隐藏重复待办",
+    "repeatTodosTitle": "重复任务",
+    "noRepeatTodos": "暂无重复任务",
+    "savedRepeatTodo": "重复任务已更新",
+    "failedRepeatTodo": "更新重复任务失败",
     "previewTitle": "预览（将发送给AI）：",
     "taskAdded": "任务已添加！",
     "pleaseEnterTask": "请输入任务",
@@ -264,6 +271,7 @@
     "newChatHistory": "新聊天历史已创建",
     "historyDeleteSuccess": "历史记录删除成功",
     "historyDeleteFail": "删除历史记录失败",
+    "messageDeleteFail": "删除消息失败",
     "diaryGenerated": "日记已生成",
     "diaryUpdated": "日记已更新",
     "diaryDeleted": "日记已删除"

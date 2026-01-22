@@ -21,6 +21,7 @@ from .chat_history_manager import (
     get_history,
     delete_history,
     get_history_list,
+    delete_message,
 )
 from .config_manager.utils import scan_config_alts_directory, scan_bg_directory
 from .conversations.conversation_handler import (
@@ -47,6 +48,7 @@ class MessageType(Enum):
         "fetch-and-set-history",
         "create-new-history",
         "delete-history",
+        "delete-message",
     ]
     DIARY = [
         "fetch-diary-list",
@@ -70,6 +72,7 @@ class WSMessage(TypedDict, total=False):
     images: Optional[List[str]]
     history_uid: Optional[str]
     history_uids: Optional[List[str]]
+    message_id: Optional[str]
     diary_uid: Optional[str]
     conf_uid: Optional[str]
     content: Optional[str]
@@ -103,6 +106,7 @@ class WebSocketHandler:
             "fetch-and-set-history": self._handle_fetch_history,
             "create-new-history": self._handle_create_history,
             "delete-history": self._handle_delete_history,
+            "delete-message": self._handle_delete_message,
             "fetch-diary-list": self._handle_diary_list_request,
             "generate-diary": self._handle_generate_diary,
             "delete-diary": self._handle_delete_diary,
@@ -830,6 +834,47 @@ class WebSocketHandler:
         )
         if history_uid == context.history_uid:
             context.history_uid = None
+
+    async def _handle_delete_message(
+        self, websocket: WebSocket, client_uid: str, data: dict
+    ) -> None:
+        """Handle deletion of a single message from a chat history."""
+
+        message_id = data.get("message_id")
+        history_uid = data.get("history_uid")
+
+        context = self.client_contexts[client_uid]
+        effective_history_uid = history_uid or context.history_uid
+
+        if not effective_history_uid or not message_id:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "message-deleted",
+                        "success": False,
+                        "history_uid": effective_history_uid,
+                        "message_id": message_id,
+                    }
+                )
+            )
+            return
+
+        success = delete_message(
+            context.character_config.conf_uid,
+            str(effective_history_uid),
+            str(message_id),
+        )
+
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "message-deleted",
+                    "success": success,
+                    "history_uid": str(effective_history_uid),
+                    "message_id": str(message_id),
+                }
+            )
+        )
 
     async def _handle_audio_data(
         self, websocket: WebSocket, client_uid: str, data: WSMessage

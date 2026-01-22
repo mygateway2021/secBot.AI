@@ -231,6 +231,18 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
           duration: 2000,
         });
         break;
+      case 'message-deleted':
+        if (!message.success) {
+          toaster.create({
+            title: t('notification.messageDeleteFail'),
+            type: 'error',
+            duration: 2000,
+          });
+          if (message.history_uid) {
+            wsService.sendMessage({ type: 'fetch-and-set-history', history_uid: message.history_uid });
+          }
+        }
+        break;
       case 'history-list':
         if (message.histories) {
           setHistoryList(message.histories);
