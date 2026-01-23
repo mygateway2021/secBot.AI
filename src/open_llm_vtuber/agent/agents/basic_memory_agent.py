@@ -111,6 +111,11 @@ class BasicMemoryAgent(AgentInterface):
 
         logger.info("BasicMemoryAgent initialized.")
 
+        # Cache for whether the current LLM supports *native* (API-level) tool calling.
+        # When a backend reports "does not support tools", we switch to prompt-mode
+        # tool calling and avoid emitting the sentinel to the user.
+        self._native_tools_supported: bool | None = None
+
     def _set_llm(self, llm: StatelessLLMInterface):
         """Set the LLM for chat completion."""
         self._llm = llm
@@ -469,6 +474,24 @@ class BasicMemoryAgent(AgentInterface):
                                     break
                         yield event
                 else:
+                    if isinstance(event, str) and event.strip() in {
+                        "__API_NOT_SUPPORT_TOOLS__",
+                        "API_NOT_SUPPORT_TOOLS",
+                    }:
+                        # IMPORTANT: do not stream this sentinel to the user.
+                        # Instead, transparently retry this same prompt in prompt mode.
+                        logger.warning(
+                            f"LLM {getattr(self._llm, 'model', '')} has no native tool support. Switching to prompt mode."
+                        )
+                        self._native_tools_supported = False
+                        self.prompt_mode_flag = True
+                        if self._tool_manager:
+                            self._tool_manager.disable()
+                        if self._json_detector:
+                            self._json_detector.reset()
+                        goto_next_while_iteration = True
+                        break
+
                     if isinstance(event, str):
                         current_turn_text += event
                         yield event
@@ -491,17 +514,6 @@ class BasicMemoryAgent(AgentInterface):
                                 for tc in pending_tool_calls
                             ],
                         }
-                        break
-                    elif event == "__API_NOT_SUPPORT_TOOLS__":
-                        logger.warning(
-                            f"LLM {getattr(self._llm, 'model', '')} has no native tool support. Switching to prompt mode."
-                        )
-                        self.prompt_mode_flag = True
-                        if self._tool_manager:
-                            self._tool_manager.disable()
-                        if self._json_detector:
-                            self._json_detector.reset()
-                        goto_next_while_iteration = True
                         break
             if goto_next_while_iteration:
                 continue
@@ -633,6 +645,19 @@ class BasicMemoryAgent(AgentInterface):
                     logger.warning(
                         f"LLM type {type(self._llm)} not explicitly handled for tool mode determination."
                     )
+
+                # If the OpenAI-compatible backend already flagged that it doesn't support
+                # tools, skip the first failing attempt and go directly to prompt-mode.
+                if tool_mode == "OpenAI" and isinstance(
+                    self._llm, OpenAICompatibleAsyncLLM
+                ):
+                    if getattr(self._llm, "support_tools", True) is False:
+                        self._native_tools_supported = False
+                        self.prompt_mode_flag = True
+                        if self._tool_manager:
+                            self._tool_manager.disable()
+                        if self._json_detector:
+                            self._json_detector.reset()
 
                 if llm_supports_native_tools and not tools:
                     logger.warning(
