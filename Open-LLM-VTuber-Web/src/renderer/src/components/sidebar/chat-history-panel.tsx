@@ -5,7 +5,6 @@
 /* eslint-disable import/order */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable react/require-default-props */
-import React, { useEffect } from 'react';
 import { Box, Button, Spinner, Flex, Text, Icon } from '@chakra-ui/react';
 import { sidebarStyles, chatPanelStyles } from './sidebar-styles';
 import { MainContainer, ChatContainer, MessageList as ChatMessageList, Message as ChatMessage, Avatar as ChatAvatar } from '@chatscope/chat-ui-kit-react';
@@ -126,10 +125,10 @@ function ChatHistoryPanel(): JSX.Element {
                           variant="ghost"
                           color="whiteAlpha.700"
                           _hover={{ bg: 'whiteAlpha.200', color: 'whiteAlpha.900' }}
-                          leftIcon={<FiCopy />}
                           onClick={() => handleCopyMessage(msg.content || '')}
                           title={t('sidebar.copyMessage')}
                         >
+                          <Icon as={FiCopy} mr={2} />
                           {t('sidebar.copyMessage')}
                         </Button>
                         <Button
@@ -137,11 +136,11 @@ function ChatHistoryPanel(): JSX.Element {
                           variant="ghost"
                           color="whiteAlpha.700"
                           _hover={{ bg: 'whiteAlpha.200', color: 'whiteAlpha.900' }}
-                          leftIcon={<FiTrash2 />}
                           onClick={() => handleDeleteMessage(msg.id)}
-                          isDisabled={msg.status === 'running'}
+                          disabled={msg.status === 'running'}
                           title={t('sidebar.deleteMessage')}
                         >
+                          <Icon as={FiTrash2} mr={2} />
                           {t('sidebar.deleteMessage')}
                         </Button>
                       </Flex>
@@ -193,10 +192,10 @@ function ChatHistoryPanel(): JSX.Element {
                         variant="ghost"
                         color="whiteAlpha.700"
                         _hover={{ bg: 'whiteAlpha.200', color: 'whiteAlpha.900' }}
-                        leftIcon={<FiCopy />}
                         onClick={() => handleCopyMessage(msg.content)}
                         title={t('sidebar.copyMessage')}
                       >
+                        <Icon as={FiCopy} mr={2} />
                         {t('sidebar.copyMessage')}
                       </Button>
                       <Button
@@ -204,10 +203,10 @@ function ChatHistoryPanel(): JSX.Element {
                         variant="ghost"
                         color="whiteAlpha.700"
                         _hover={{ bg: 'whiteAlpha.200', color: 'whiteAlpha.900' }}
-                        leftIcon={<FiTrash2 />}
                         onClick={() => handleDeleteMessage(msg.id)}
                         title={t('sidebar.deleteMessage')}
                       >
+                        <Icon as={FiTrash2} mr={2} />
                         {t('sidebar.deleteMessage')}
                       </Button>
                     </Flex>
