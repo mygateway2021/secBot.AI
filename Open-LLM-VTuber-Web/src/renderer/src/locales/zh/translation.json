@@ -148,8 +148,15 @@
     "camera": "摄像头",
     "screen": "屏幕",
     "browser": "浏览器",
-    "live": "直播",
+    "live": "直播模式",
+    "pet": "宠物模式",
+    "petModeDesktopOnly": "宠物模式仅在桌面应用中可用",
+    "dailyLife": "日常生活",
     "deleteMessage": "删除",
+    "copyMessage": "复制",
+    "messageCopied": "消息已复制到剪贴板",
+    "toolUsing": "{{name}} 正在使用工具 {{toolName}}",
+    "toolUsed": "{{name}} 使用了工具 {{toolName}}",
     "noMessages": "暂无消息。开始对话吧！",
     "noBrowserSession": "无活跃浏览器会话",
     "browserSession": "浏览器会话"
@@ -291,6 +298,7 @@
     "failedParseWebSocket": "解析WebSocket消息失败",
     "websocketNotOpen": "WebSocket未连接",
     "diaryDeleteFail": "删除日记失败",
+    "copyFailed": "复制消息到剪贴板失败",
     "vadMisfire": "检测到语音但过于简短，请尝试提高音量或说得更久一些，或调整识别设置（降低语音识别阈值、降低负面语音阈值、减少验证帧数）"
   },
   "aiState": {

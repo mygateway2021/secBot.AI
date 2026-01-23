@@ -16,7 +16,8 @@ import { useConfig } from '@/context/character-config-context';
 import { useWebSocket } from '@/context/websocket-context';
 import { FaTools, FaCheck, FaTimes } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
-import { FiTrash2 } from 'react-icons/fi';
+import { FiTrash2, FiCopy } from 'react-icons/fi';
+import { toaster } from '@/components/ui/toaster';
 
 // Main component
 function ChatHistoryPanel(): JSX.Element {
@@ -34,6 +35,22 @@ function ChatHistoryPanel(): JSX.Element {
       type: 'delete-message',
       history_uid: currentHistoryUid,
       message_id: messageId,
+    });
+  };
+
+  const handleCopyMessage = (content: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      toaster.create({
+        title: t('sidebar.messageCopied'),
+        type: 'success',
+        duration: 2000,
+      });
+    }).catch(() => {
+      toaster.create({
+        title: t('error.copyFailed'),
+        type: 'error',
+        duration: 2000,
+      });
     });
   };
 
@@ -103,7 +120,18 @@ function ChatHistoryPanel(): JSX.Element {
                           />
                         )}
                       </Flex>
-                      <Flex justify="flex-end" px={2} mt={1} mb={2}>
+                      <Flex justify="flex-end" px={2} mt={1} mb={2} gap={2}>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          color="whiteAlpha.700"
+                          _hover={{ bg: 'whiteAlpha.200', color: 'whiteAlpha.900' }}
+                          leftIcon={<FiCopy />}
+                          onClick={() => handleCopyMessage(msg.content || '')}
+                          title={t('sidebar.copyMessage')}
+                        >
+                          {t('sidebar.copyMessage')}
+                        </Button>
                         <Button
                           size="xs"
                           variant="ghost"
@@ -159,7 +187,18 @@ function ChatHistoryPanel(): JSX.Element {
                         )}
                       </ChatAvatar>
                     </ChatMessage>
-                    <Flex justify="flex-end" px={2} mt={1} mb={2}>
+                    <Flex justify="flex-end" px={2} mt={1} mb={2} gap={2}>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        color="whiteAlpha.700"
+                        _hover={{ bg: 'whiteAlpha.200', color: 'whiteAlpha.900' }}
+                        leftIcon={<FiCopy />}
+                        onClick={() => handleCopyMessage(msg.content)}
+                        title={t('sidebar.copyMessage')}
+                      >
+                        {t('sidebar.copyMessage')}
+                      </Button>
                       <Button
                         size="xs"
                         variant="ghost"

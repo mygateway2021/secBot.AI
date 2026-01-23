@@ -153,6 +153,10 @@
     "browser": "Browser",
     "live": "Live",
     "deleteMessage": "Delete",
+    "copyMessage": "Copy",
+    "messageCopied": "Message copied to clipboard",
+    "toolUsing": "{{name}} is using tool {{toolName}}",
+    "toolUsed": "{{name}} used tool {{toolName}}",
     "noMessages": "No messages yet. Start a conversation!",
     "noBrowserSession": "No active browser session",
     "browserSession": "Browser Session"
@@ -294,6 +298,7 @@
     "failedParseWebSocket": "Failed to parse WebSocket message",
     "websocketNotOpen": "WebSocket is not open.",
     "diaryDeleteFail": "Failed to delete diary",
+    "copyFailed": "Failed to copy message to clipboard",
     "vadMisfire": "Voice detected but too brief. Try speaking louder/longer, or adjust settings (lower speech threshold, lower negative threshold, reduce redemption frames)."
   },
 
