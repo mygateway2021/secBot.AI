@@ -615,7 +615,7 @@ class WebSocketHandler:
             f"{joined_history}\n"
         )
 
-        batch_input = await create_batch_input(
+        batch_input, _ = await create_batch_input(
             input_text=prompt,
             images=None,
             from_name=context.character_config.human_name,
