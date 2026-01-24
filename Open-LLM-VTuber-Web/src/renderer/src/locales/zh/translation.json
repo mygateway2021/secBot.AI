@@ -235,6 +235,9 @@
     "noRepeatTodos": "暂无重复任务",
     "savedRepeatTodo": "重复任务已更新",
     "failedRepeatTodo": "更新重复任务失败",
+    "deletedRepeatTodo": "重复任务已删除",
+    "failedDeleteRepeatTodo": "删除重复任务失败",
+    "deleteRecurringTask": "删除重复任务",
     "previewTitle": "预览（将发送给AI）：",
     "taskAdded": "任务已添加！",
     "pleaseEnterTask": "请输入任务",
@@ -314,4 +317,4 @@
     "connecting": "连接中",
     "clickToReconnect": "点击重新连接"
   }
-} 
+}

@@ -1,6 +1,6 @@
 /* eslint-disable import/order */
 /* eslint-disable no-use-before-define */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { BgUrlContextState } from '@/context/bgurl-context';
 import { defaultBaseUrl, defaultWsUrl } from '@/context/websocket-context';
 import { useSubtitle } from '@/context/subtitle-context';
@@ -136,33 +136,23 @@ export const useGeneralSettings = ({
     if (confName) {
       const filename = getFilenameByName(confName);
       if (filename) {
-        const newSettings = {
-          ...settings,
-          selectedCharacterPreset: [filename],
-        };
-        setSettings(newSettings);
-        setOriginalSettings(newSettings);
+        setSettings((prev) => {
+          if (prev.selectedCharacterPreset[0] === filename) return prev;
+          return {
+            ...prev,
+            selectedCharacterPreset: [filename],
+          };
+        });
+        setOriginalSettings((prev) => {
+          if (prev.selectedCharacterPreset[0] === filename) return prev;
+          return {
+            ...prev,
+            selectedCharacterPreset: [filename],
+          };
+        });
       }
     }
-  }, [confName]);
-
-  // Add save/cancel effect
-  useEffect(() => {
-    if (!onSave || !onCancel) return;
-
-    const cleanupSave = onSave(() => {
-      handleSave();
-    });
-
-    const cleanupCancel = onCancel(() => {
-      handleCancel();
-    });
-
-    return () => {
-      cleanupSave?.();
-      cleanupCancel?.();
-    };
-  }, [onSave, onCancel]);
+  }, [confName, getFilenameByName]);
 
   const handleSettingChange = (
     key: keyof GeneralSettings,
@@ -182,11 +172,11 @@ export const useGeneralSettings = ({
     }
   };
 
-  const handleSave = (): void => {
+  const handleSave = useCallback((): void => {
     setOriginalSettings(settings);
-  };
+  }, [settings]);
 
-  const handleCancel = (): void => {
+  const handleCancel = useCallback((): void => {
     setSettings(originalSettings);
 
     // Restore all settings to original values
@@ -209,9 +199,19 @@ export const useGeneralSettings = ({
     } else {
       stopBackgroundCamera();
     }
-  };
+  }, [
+    originalSettings,
+    bgUrlContext,
+    onWsUrlChange,
+    onBaseUrlChange,
+    originalConfName,
+    setConfName,
+    setShowSubtitle,
+    startBackgroundCamera,
+    stopBackgroundCamera,
+  ]);
 
-  const handleCharacterPresetChange = (value: string[]): void => {
+  const handleCharacterPresetChange = useCallback((value: string[]): void => {
     const selectedFilename = value[0];
     const selectedConfig = configFiles.find((config) => config.filename === selectedFilename);
     const currentFilename = confName ? getFilenameByName(confName) : '';
@@ -225,7 +225,19 @@ export const useGeneralSettings = ({
     if (selectedConfig) {
       switchCharacter(selectedFilename);
     }
-  };
+  }, [configFiles, confName, getFilenameByName, handleSettingChange, switchCharacter]);
+
+  useEffect(() => {
+    if (!onSave || !onCancel) return;
+
+    const cleanupSave = onSave(handleSave);
+    const cleanupCancel = onCancel(handleCancel);
+
+    return () => {
+      cleanupSave?.();
+      cleanupCancel?.();
+    };
+  }, [onSave, onCancel, handleSave, handleCancel]);
 
   const handleCameraToggle = async (checked: boolean) => {
     if (!setUseCameraBackground) return;

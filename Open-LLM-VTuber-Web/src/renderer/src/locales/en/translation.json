@@ -235,6 +235,9 @@
     "noRepeatTodos": "No repeating tasks",
     "savedRepeatTodo": "Repeat task updated",
     "failedRepeatTodo": "Failed to update repeat task",
+    "deletedRepeatTodo": "Repeating task deleted",
+    "failedDeleteRepeatTodo": "Failed to delete repeating task",
+    "deleteRecurringTask": "Delete repeating task",
     "previewTitle": "Preview (will be sent to AI):",
     "taskAdded": "Task added!",
     "pleaseEnterTask": "Please enter a task",
@@ -301,7 +304,6 @@
     "copyFailed": "Failed to copy message to clipboard",
     "vadMisfire": "Voice detected but too brief. Try speaking louder/longer, or adjust settings (lower speech threshold, lower negative threshold, reduce redemption frames)."
   },
-
   "aiState": {
     "idle": "idle",
     "thinking-speaking": "thinking/speaking",
@@ -315,4 +317,4 @@
     "connecting": "Connecting",
     "clickToReconnect": "Click to Reconnect"
   }
-} 
+}

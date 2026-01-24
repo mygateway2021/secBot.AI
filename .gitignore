@@ -1,3 +1,7 @@
+.cursor/
+.gemini/
+.github/
+
 # ignore the user configuration file
 conf.yaml
 

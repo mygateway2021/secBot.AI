@@ -290,23 +290,26 @@ function HistoryDrawer({ children }: HistoryDrawerProps): JSX.Element {
   // Simple markdown to HTML converter for printing
   const convertMarkdownToHTML = (markdown: string): string => {
     let html = markdown;
-    
+
     // Headers
+    html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
+    html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
+    html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
     html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
     html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
     html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-    
+
     // Bold
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    
+
     // Italic
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    
+
     // Lists
     html = html.replace(/^\* (.+)$/gim, '<li>$1</li>');
     html = html.replace(/^- (.+)$/gim, '<li>$1</li>');
     html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-    
+
     // Paragraphs
     html = html.split('\n\n').map(para => {
       if (!para.startsWith('<') && para.trim()) {
@@ -314,7 +317,7 @@ function HistoryDrawer({ children }: HistoryDrawerProps): JSX.Element {
       }
       return para;
     }).join('\n');
-    
+
     return html;
   };
 
@@ -502,7 +505,7 @@ function HistoryDrawer({ children }: HistoryDrawerProps): JSX.Element {
                             <Box
                               fontSize="sm"
                               color="white"
-                              sx={{
+                              css={{
                                 '& h1': { fontSize: '1.5em', fontWeight: 'bold', mt: 4, mb: 2 },
                                 '& h2': { fontSize: '1.3em', fontWeight: 'bold', mt: 3, mb: 2 },
                                 '& h3': { fontSize: '1.1em', fontWeight: 'bold', mt: 2, mb: 1 },

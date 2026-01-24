@@ -9,6 +9,8 @@ import { Box, Button, Spinner, Flex, Text, Icon } from '@chakra-ui/react';
 import { sidebarStyles, chatPanelStyles } from './sidebar-styles';
 import { MainContainer, ChatContainer, MessageList as ChatMessageList, Message as ChatMessage, Avatar as ChatAvatar } from '@chatscope/chat-ui-kit-react';
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useChatHistory } from '@/context/chat-history-context';
 import { Global } from '@emotion/react';
 import { useConfig } from '@/context/character-config-context';
@@ -54,9 +56,9 @@ function ChatHistoryPanel(): JSX.Element {
   };
 
   const validMessages = messages.filter((msg) => msg.content || // Keep messages with content
-     (msg.type === 'tool_call_status' && msg.status === 'running') || // Keep running tools
-     (msg.type === 'tool_call_status' && msg.status === 'completed') || // Keep completed tools
-     (msg.type === 'tool_call_status' && msg.status === 'error'), // Keep error tools
+    (msg.type === 'tool_call_status' && msg.status === 'running') || // Keep running tools
+    (msg.type === 'tool_call_status' && msg.status === 'completed') || // Keep completed tools
+    (msg.type === 'tool_call_status' && msg.status === 'error'), // Keep error tools
   );
 
   return (
@@ -146,7 +148,7 @@ function ChatHistoryPanel(): JSX.Element {
                       </Flex>
                     </Box>
                   );
-                } 
+                }
                 // Render Standard Chat Message (human or ai text)
                 return (
                   <Box key={msg.id}>
@@ -163,6 +165,44 @@ function ChatHistoryPanel(): JSX.Element {
                       avatarPosition={msg.role === 'ai' ? 'tl' : 'tr'}
                       avatarSpacer={false}
                     >
+                      <ChatMessage.CustomContent>
+                        <Box
+                          css={{
+                            '& h1, & h2, & h3, & h4, & h5, & h6': {
+                              fontWeight: 'bold',
+                              my: 2,
+                              color: 'white',
+                            },
+                            '& h1': { fontSize: '1.4em' },
+                            '& h2': { fontSize: '1.3em' },
+                            '& h3': { fontSize: '1.20em' },
+                            '& h4': { fontSize: '1.1em' },
+                            '& h5': { fontSize: '1.0em' },
+                            '& h6': { fontSize: '0.9em' },
+                            '& p': { mb: 2 },
+                            '& p:last-child': { mb: 0 },
+                            '& ul, & ol': { ml: 4, mb: 2 },
+                            '& li': { mb: 1 },
+                            '& code': {
+                              bg: 'whiteAlpha.300',
+                              px: 1,
+                              borderRadius: 'sm',
+                              fontFamily: 'mono',
+                            },
+                            '& pre': {
+                              bg: 'blackAlpha.500',
+                              p: 2,
+                              borderRadius: 'md',
+                              overflowX: 'auto',
+                              my: 2,
+                            },
+                          }}
+                        >
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        </Box>
+                      </ChatMessage.CustomContent>
                       <ChatAvatar>
                         {msg.role === 'ai' ? (
                           msg.avatar ? (
@@ -178,8 +218,8 @@ function ChatHistoryPanel(): JSX.Element {
                             />
                           ) : (
                             (msg.name && msg.name[0].toUpperCase()) ||
-                              (confName && confName[0].toUpperCase()) ||
-                              'A'
+                            (confName && confName[0].toUpperCase()) ||
+                            'A'
                           )
                         ) : (
                           userName[0].toUpperCase()

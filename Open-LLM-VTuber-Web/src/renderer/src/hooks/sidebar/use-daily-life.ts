@@ -434,6 +434,19 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
     saveTodos(newTodos);
   }, [todos, saveTodos]);
 
+  const deleteRecurringTodo = useCallback(async (id: string) => {
+    const recurring = loadRecurringTodos();
+    const nextRecurring = recurring.filter((r) => r.id !== id);
+    saveRecurringTodos(nextRecurring);
+    setRecurringTodos(nextRecurring);
+
+    // Also remove instances of this recurring todo from current day's todos
+    const nextTodos = todos.filter((todo) => todo.recurring_id !== id);
+    if (nextTodos.length !== todos.length) {
+      saveTodos(nextTodos);
+    }
+  }, [loadRecurringTodos, saveRecurringTodos, saveTodos, todos]);
+
   // Format schedule for chat
   const formatScheduleForChat = useCallback((): string => {
     if (todos.length === 0) return '';
@@ -453,7 +466,7 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
       return ` (${minutes}min)`;
     };
     const separator = isZh ? '；' : '; ';
-    const joinItems = (items: TodoItem[]) => items.map((t) => 
+    const joinItems = (items: TodoItem[]) => items.map((t) =>
       clipText(t.text) + (t.time_spent ? formatTime(t.time_spent) : '')
     ).join(separator);
 
@@ -498,6 +511,7 @@ export const useDailyLife = (_options?: DailyLifeOptions) => {
     recurringTodos,
     reloadRecurringTodos,
     updateRecurringTodo,
+    deleteRecurringTodo,
     addTodo,
     toggleTodo,
     deleteTodo,

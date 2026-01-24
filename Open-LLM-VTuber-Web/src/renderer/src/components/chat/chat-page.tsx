@@ -1,9 +1,9 @@
 import { Box, Flex, IconButton, Image, Spinner, Text } from '@chakra-ui/react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { FiPrinter } from 'react-icons/fi';
+import { FiPrinter, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Tooltip } from '@/components/ui/tooltip';
 import { useChatHistory } from '@/context/chat-history-context';
 import { useConfig } from '@/context/character-config-context';
@@ -28,6 +28,9 @@ function convertMarkdownToHTML(markdown: string): string {
   html = html.replace(/`([^`]+?)`/g, '<code>$1</code>');
 
   // Headers
+  html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
+  html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
+  html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
   html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
   html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
   html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
@@ -95,10 +98,10 @@ export default function ChatPage(): JSX.Element {
 
   // Get the LLM model display text
   const llmDisplayText = useMemo(() => {
-    const formattedProvider = llmProvider 
-      ? llmProvider.replace(/_/g, ' ').replace(/llm$/i, '').trim() 
+    const formattedProvider = llmProvider
+      ? llmProvider.replace(/_/g, ' ').replace(/llm$/i, '').trim()
       : '';
-    
+
     if (formattedProvider && llmModel) {
       return `${formattedProvider}, ${llmModel}`;
     }
@@ -111,15 +114,55 @@ export default function ChatPage(): JSX.Element {
     return '';
   }, [llmProvider, llmModel]);
 
-  // Get the last AI message content to display
-  const displayContent = useMemo(() => {
-    const aiMessages = messages
+  // Get all AI messages for the current character
+  const aiMessages = useMemo(() => {
+    return messages
       .filter((m) => m.role === 'ai' && m.type === 'text')
-      // If a character is selected, prefer only that character's AI messages.
-      // This prevents briefly showing the previous character's last message after a switch.
-      .filter((m) => !confName || !m.name || m.name === confName);
-    return aiMessages.length > 0 ? aiMessages[aiMessages.length - 1].content : '';
+      .filter((m) => !confName || !m.name || m.name === confName || m.name === 'AI');
   }, [messages, confName]);
+
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+
+  // When aiMessages change, auto-follow if we were at the end
+  const lastAiMessagesLength = useRef(aiMessages.length);
+  useEffect(() => {
+    if (aiMessages.length > 0) {
+      const wereAtEnd = selectedIndex === lastAiMessagesLength.current - 1;
+      const isInitial = selectedIndex === -1;
+
+      if (isInitial || wereAtEnd) {
+        setSelectedIndex(aiMessages.length - 1);
+      }
+    } else {
+      setSelectedIndex(-1);
+    }
+    lastAiMessagesLength.current = aiMessages.length;
+  }, [aiMessages.length]);
+
+  // Get the message content to display
+  const displayContent = useMemo(() => {
+    if (selectedIndex >= 0 && selectedIndex < aiMessages.length) {
+      return aiMessages[selectedIndex].content;
+    }
+    return '';
+  }, [aiMessages, selectedIndex]);
+
+  const currentMessageTimestamp = useMemo(() => {
+    if (selectedIndex >= 0 && selectedIndex < aiMessages.length) {
+      return aiMessages[selectedIndex].timestamp;
+    }
+    return undefined;
+  }, [aiMessages, selectedIndex]);
+
+  const handlePrevMessage = () => {
+    setSelectedIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNextMessage = () => {
+    setSelectedIndex((prev) => Math.min(aiMessages.length - 1, prev + 1));
+  };
+
+  const isLatestMessage = selectedIndex === aiMessages.length - 1;
 
   // Check if AI is currently generating response
   const isGenerating = useMemo(() => {
@@ -327,20 +370,62 @@ export default function ChatPage(): JSX.Element {
                         <FiPrinter />
                       </IconButton>
                     </Tooltip>
+
+                    {aiMessages.length > 0 && (
+                      <Flex align="center" gap={1} ml={3} bg="whiteAlpha.100" px={2} py={1} borderRadius="md">
+                        <IconButton
+                          aria-label="Previous message"
+                          size="xs"
+                          variant="ghost"
+                          color="whiteAlpha.900"
+                          _hover={{ bg: 'whiteAlpha.200' }}
+                          onClick={handlePrevMessage}
+                          disabled={selectedIndex <= 0}
+                          title="Previous message"
+                        >
+                          <FiChevronLeft />
+                        </IconButton>
+                        <Text fontSize="xs" fontWeight="bold" color="whiteAlpha.900" minW="45px" textAlign="center">
+                          {selectedIndex + 1} / {aiMessages.length}
+                        </Text>
+                        <IconButton
+                          aria-label="Next message"
+                          size="xs"
+                          variant="ghost"
+                          color="whiteAlpha.900"
+                          _hover={{ bg: 'whiteAlpha.200' }}
+                          onClick={handleNextMessage}
+                          disabled={selectedIndex >= aiMessages.length - 1}
+                          title="Next message"
+                        >
+                          <FiChevronRight />
+                        </IconButton>
+                      </Flex>
+                    )}
+
                     {llmDisplayText ? (
                       <Text fontSize="sm" color="whiteAlpha.700">
                         ({llmDisplayText})
                       </Text>
                     ) : null}
+
+                    {currentMessageTimestamp && (
+                      <Text fontSize="xs" color="whiteAlpha.500" ml="auto">
+                        {new Date(currentMessageTimestamp).toLocaleString()}
+                      </Text>
+                    )}
                   </Flex>
-                  {isGenerating ? (
-                    <Flex align="center" gap={3} py={4}>
-                      <Spinner size="md" color="blue.400" />
-                      <Text fontSize="md" color="whiteAlpha.700">
+
+                  {isGenerating && isLatestMessage && (
+                    <Flex align="center" gap={3} py={2} mb={2}>
+                      <Spinner size="sm" color="blue.400" />
+                      <Text fontSize="sm" color="whiteAlpha.700">
                         Generating response...
                       </Text>
                     </Flex>
-                  ) : displayContent.trim() ? (
+                  )}
+
+                  {displayContent.trim() ? (
                     <Box
                       fontSize="md"
                       lineHeight="1.8"
@@ -355,17 +440,17 @@ export default function ChatPage(): JSX.Element {
                         '& h4, & h5, & h6': { color: 'white', marginTop: '0.75rem', marginBottom: '0.5rem' },
                         '& ul, & ol': { paddingLeft: '1.5rem', marginBottom: '1rem' },
                         '& li': { marginBottom: '0.5rem' },
-                        '& code': { 
-                          bg: 'whiteAlpha.200', 
-                          padding: '0.2rem 0.4rem', 
+                        '& code': {
+                          bg: 'whiteAlpha.200',
+                          padding: '0.2rem 0.4rem',
                           borderRadius: 'sm',
                           fontSize: '0.9em',
                           fontFamily: 'monospace',
                         },
-                        '& pre': { 
-                          bg: 'gray.800', 
-                          padding: '1rem', 
-                          borderRadius: 'md', 
+                        '& pre': {
+                          bg: 'gray.800',
+                          padding: '1rem',
+                          borderRadius: 'md',
                           overflowX: 'auto',
                           marginBottom: '1rem',
                         },
@@ -373,10 +458,10 @@ export default function ChatPage(): JSX.Element {
                           bg: 'transparent',
                           padding: 0,
                         },
-                        '& blockquote': { 
-                          borderLeft: '4px solid', 
-                          borderColor: 'blue.400', 
-                          paddingLeft: '1rem', 
+                        '& blockquote': {
+                          borderLeft: '4px solid',
+                          borderColor: 'blue.400',
+                          paddingLeft: '1rem',
                           margin: '1rem 0',
                           fontStyle: 'italic',
                         },
@@ -488,7 +573,7 @@ export default function ChatPage(): JSX.Element {
                       >
                         {displayContent}
                       </ReactMarkdown>
-                      
+
                       {/* Display RAG References */}
                       {ragReferences && ragReferences.length > 0 && (
                         <Box

@@ -61,7 +61,7 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
     weekdays: number[];
   }>>({});
   const { sendMessage, baseUrl } = useWebSocket();
-  
+
   const {
     todos,
     recurringTodos,
@@ -70,6 +70,7 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
     deleteTodo,
     clearCompleted,
     updateRecurringTodo,
+    deleteRecurringTodo,
     updateTodoTimer,
     formatScheduleForChat,
     stats,
@@ -113,19 +114,19 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       oscillator.frequency.value = 800;
       oscillator.type = 'sine';
-      
+
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
+
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.5);
-      
+
       // Play three beeps
       setTimeout(() => {
         const osc2 = audioContext.createOscillator();
@@ -139,7 +140,7 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
         osc2.start();
         osc2.stop(audioContext.currentTime + 0.5);
       }, 200);
-      
+
       setTimeout(() => {
         const osc3 = audioContext.createOscillator();
         const gain3 = audioContext.createGain();
@@ -160,9 +161,9 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
   const handleStartTimer = (taskId: string) => {
     const duration = pomodoroDuration * 60 * 1000; // Convert minutes to milliseconds
     startTimer(taskId, duration);
-    void updateTodoTimer(taskId, { 
+    void updateTodoTimer(taskId, {
       pomodoro_start_time: Date.now(),
-      pomodoro_duration: duration 
+      pomodoro_duration: duration
     });
     toaster.create({
       title: t('dailyLife.timerStarted'),
@@ -195,8 +196,8 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
     if (activeTimer) {
       const todo = todos.find(t => t.id === activeTimer.taskId);
       if (todo) {
-        void updateTodoTimer(activeTimer.taskId, { 
-          time_spent: (todo.time_spent || 0) + timeSpent 
+        void updateTodoTimer(activeTimer.taskId, {
+          time_spent: (todo.time_spent || 0) + timeSpent
         });
       }
     }
@@ -362,6 +363,23 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
     } catch {
       toaster.create({
         title: t('dailyLife.failedRepeatTodo'),
+        type: 'error',
+        duration: 2000,
+      });
+    }
+  };
+
+  const handleDeleteRecurring = async (id: string) => {
+    try {
+      await deleteRecurringTodo(id);
+      toaster.create({
+        title: t('dailyLife.deletedRepeatTodo'),
+        type: 'success',
+        duration: 1500,
+      });
+    } catch {
+      toaster.create({
+        title: t('dailyLife.failedDeleteRepeatTodo'),
         type: 'error',
         duration: 2000,
       });
@@ -554,160 +572,160 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
               alignItems="stretch"
               css={sidebarStyles.historyDrawer.listContainer.css}
             >
-            {todos.length === 0 ? (
-              <Box textAlign="center" py={8} color="whiteAlpha.700">
-                <Text fontSize="3xl" mb={2}>📝</Text>
-                <Text fontSize="sm">{t('dailyLife.noItems')}</Text>
-                <Text fontSize="xs" mt={1} color="whiteAlpha.500">{t('dailyLife.addFirstTask')}</Text>
-              </Box>
-            ) : (
-              todos.map((todo) => {
-                const isPaused = activeTimer?.taskId === todo.id && activeTimer.isPaused;
-                const hasActiveTimer = activeTimer?.taskId === todo.id;
-                
-                return (
-                  <VStack
-                    key={todo.id}
-                    p={3}
-                    gap={2}
-                    bg={todo.completed ? 'whiteAlpha.100' : 'whiteAlpha.50'}
-                    borderRadius="md"
-                    _hover={{ bg: 'whiteAlpha.100' }}
-                    transition="all 0.2s"
-                    alignItems="stretch"
-                  >
-                    <HStack>
-                      <Checkbox
-                        checked={todo.completed}
-                        onCheckedChange={() => void toggleTodo(todo.id)}
-                      />
-                      <VStack flex={1} alignItems="flex-start" gap={1}>
-                        <Text
-                          fontSize="sm"
-                          textDecoration={todo.completed ? 'line-through' : 'none'}
-                          opacity={todo.completed ? 0.6 : 1}
-                          color="white"
-                        >
-                          {todo.text}
-                        </Text>
-                        {todo.time_spent && todo.time_spent > 0 && (
-                          <Text fontSize="xs" color="blue.300">
-                            ⏱️ {t('dailyLife.timeSpent')}: {formatTime(todo.time_spent)}
+              {todos.length === 0 ? (
+                <Box textAlign="center" py={8} color="whiteAlpha.700">
+                  <Text fontSize="3xl" mb={2}>📝</Text>
+                  <Text fontSize="sm">{t('dailyLife.noItems')}</Text>
+                  <Text fontSize="xs" mt={1} color="whiteAlpha.500">{t('dailyLife.addFirstTask')}</Text>
+                </Box>
+              ) : (
+                todos.map((todo) => {
+                  const isPaused = activeTimer?.taskId === todo.id && activeTimer.isPaused;
+                  const hasActiveTimer = activeTimer?.taskId === todo.id;
+
+                  return (
+                    <VStack
+                      key={todo.id}
+                      p={3}
+                      gap={2}
+                      bg={todo.completed ? 'whiteAlpha.100' : 'whiteAlpha.50'}
+                      borderRadius="md"
+                      _hover={{ bg: 'whiteAlpha.100' }}
+                      transition="all 0.2s"
+                      alignItems="stretch"
+                    >
+                      <HStack>
+                        <Checkbox
+                          checked={todo.completed}
+                          onCheckedChange={() => void toggleTodo(todo.id)}
+                        />
+                        <VStack flex={1} alignItems="flex-start" gap={1}>
+                          <Text
+                            fontSize="sm"
+                            textDecoration={todo.completed ? 'line-through' : 'none'}
+                            opacity={todo.completed ? 0.6 : 1}
+                            color="white"
+                          >
+                            {todo.text}
+                          </Text>
+                          {todo.time_spent && todo.time_spent > 0 && (
+                            <Text fontSize="xs" color="blue.300">
+                              ⏱️ {t('dailyLife.timeSpent')}: {formatTime(todo.time_spent)}
+                            </Text>
+                          )}
+                        </VStack>
+                        {todo.repeat && todo.repeat !== 'none' && (
+                          <Text fontSize="xs" color="whiteAlpha.600" whiteSpace="nowrap">
+                            {t('dailyLife.repeats')}: {formatRepeatLabel(todo.repeat, todo.repeat_config)}
                           </Text>
                         )}
-                      </VStack>
-                      {todo.repeat && todo.repeat !== 'none' && (
-                        <Text fontSize="xs" color="whiteAlpha.600" whiteSpace="nowrap">
-                          {t('dailyLife.repeats')}: {formatRepeatLabel(todo.repeat, todo.repeat_config)}
-                        </Text>
-                      )}
-                      
-                      {/* Timer Controls */}
-                      {!todo.completed && (
-                        <HStack gap={1}>
-                          {!hasActiveTimer ? (
-                            <IconButton
-                              onClick={() => handleStartTimer(todo.id)}
-                              size="sm"
-                              variant="ghost"
-                              colorPalette="green"
-                              aria-label={t('dailyLife.startTimer')}
-                              title={t('dailyLife.startPomodoro')}
-                            >
-                              <FiPlay />
-                            </IconButton>
-                          ) : (
-                            <>
-                              {isPaused ? (
-                                <IconButton
-                                  onClick={handleResumeTimer}
-                                  size="sm"
-                                  variant="ghost"
-                                  colorPalette="green"
-                                  aria-label={t('dailyLife.resumeTimer')}
-                                  title={t('dailyLife.resumeTimer')}
-                                >
-                                  <FiPlay />
-                                </IconButton>
-                              ) : (
-                                <IconButton
-                                  onClick={handlePauseTimer}
-                                  size="sm"
-                                  variant="ghost"
-                                  colorPalette="yellow"
-                                  aria-label={t('dailyLife.pauseTimer')}
-                                  title={t('dailyLife.pauseTimer')}
-                                >
-                                  <FiPause />
-                                </IconButton>
-                              )}
+
+                        {/* Timer Controls */}
+                        {!todo.completed && (
+                          <HStack gap={1}>
+                            {!hasActiveTimer ? (
                               <IconButton
-                                onClick={handleStopTimer}
+                                onClick={() => handleStartTimer(todo.id)}
                                 size="sm"
                                 variant="ghost"
-                                colorPalette="red"
-                                aria-label={t('dailyLife.stopTimer')}
-                                title={t('dailyLife.stopTimer')}
+                                colorPalette="green"
+                                aria-label={t('dailyLife.startTimer')}
+                                title={t('dailyLife.startPomodoro')}
                               >
-                                <FiSquare />
+                                <FiPlay />
                               </IconButton>
-                            </>
-                          )}
-                        </HStack>
+                            ) : (
+                              <>
+                                {isPaused ? (
+                                  <IconButton
+                                    onClick={handleResumeTimer}
+                                    size="sm"
+                                    variant="ghost"
+                                    colorPalette="green"
+                                    aria-label={t('dailyLife.resumeTimer')}
+                                    title={t('dailyLife.resumeTimer')}
+                                  >
+                                    <FiPlay />
+                                  </IconButton>
+                                ) : (
+                                  <IconButton
+                                    onClick={handlePauseTimer}
+                                    size="sm"
+                                    variant="ghost"
+                                    colorPalette="yellow"
+                                    aria-label={t('dailyLife.pauseTimer')}
+                                    title={t('dailyLife.pauseTimer')}
+                                  >
+                                    <FiPause />
+                                  </IconButton>
+                                )}
+                                <IconButton
+                                  onClick={handleStopTimer}
+                                  size="sm"
+                                  variant="ghost"
+                                  colorPalette="red"
+                                  aria-label={t('dailyLife.stopTimer')}
+                                  title={t('dailyLife.stopTimer')}
+                                >
+                                  <FiSquare />
+                                </IconButton>
+                              </>
+                            )}
+                          </HStack>
+                        )}
+
+                        <IconButton
+                          onClick={(e) => {
+                            if (todo.recurring_id) {
+                              const stopRecurring = e.shiftKey;
+                              void deleteTodo(todo.id, { stopRecurring });
+                              toaster.create({
+                                title: stopRecurring
+                                  ? t('dailyLife.stoppedRepeating')
+                                  : t('dailyLife.deletedOccurrence'),
+                                type: 'success',
+                                duration: 1500,
+                              });
+                              return;
+                            }
+
+                            void deleteTodo(todo.id);
+                          }}
+                          size="sm"
+                          variant="ghost"
+                          colorPalette="red"
+                          aria-label="Delete task"
+                          title={todo.recurring_id ? t('dailyLife.deleteRecurringHint') : t('dailyLife.deleteOneHint')}
+                        >
+                          <FiTrash2 />
+                        </IconButton>
+                      </HStack>
+
+                      {/* Timer Progress */}
+                      {hasActiveTimer && (
+                        <VStack gap={1} width="100%">
+                          <HStack width="100%" justifyContent="space-between">
+                            <Text fontSize="xs" color="whiteAlpha.700">
+                              {formatTime(getTimeRemaining())}
+                            </Text>
+                            <Text fontSize="xs" color="whiteAlpha.700">
+                              {Math.floor(getProgress())}%
+                            </Text>
+                          </HStack>
+                          <Box width="100%" height="4px" bg="whiteAlpha.200" borderRadius="full" overflow="hidden">
+                            <Box
+                              height="100%"
+                              width={`${getProgress()}%`}
+                              bg={isPaused ? 'yellow.400' : 'green.400'}
+                              transition="width 0.1s ease-out"
+                            />
+                          </Box>
+                        </VStack>
                       )}
-
-                      <IconButton
-                        onClick={(e) => {
-                          if (todo.recurring_id) {
-                            const stopRecurring = e.shiftKey;
-                            void deleteTodo(todo.id, { stopRecurring });
-                            toaster.create({
-                              title: stopRecurring
-                                ? t('dailyLife.stoppedRepeating')
-                                : t('dailyLife.deletedOccurrence'),
-                              type: 'success',
-                              duration: 1500,
-                            });
-                            return;
-                          }
-
-                          void deleteTodo(todo.id);
-                        }}
-                        size="sm"
-                        variant="ghost"
-                        colorPalette="red"
-                        aria-label="Delete task"
-                        title={todo.recurring_id ? t('dailyLife.deleteRecurringHint') : t('dailyLife.deleteOneHint')}
-                      >
-                        <FiTrash2 />
-                      </IconButton>
-                    </HStack>
-
-                    {/* Timer Progress */}
-                    {hasActiveTimer && (
-                      <VStack gap={1} width="100%">
-                        <HStack width="100%" justifyContent="space-between">
-                          <Text fontSize="xs" color="whiteAlpha.700">
-                            {formatTime(getTimeRemaining())}
-                          </Text>
-                          <Text fontSize="xs" color="whiteAlpha.700">
-                            {Math.floor(getProgress())}%
-                          </Text>
-                        </HStack>
-                        <Box width="100%" height="4px" bg="whiteAlpha.200" borderRadius="full" overflow="hidden">
-                          <Box
-                            height="100%"
-                            width={`${getProgress()}%`}
-                            bg={isPaused ? 'yellow.400' : 'green.400'}
-                            transition="width 0.1s ease-out"
-                          />
-                        </Box>
-                      </VStack>
-                    )}
-                  </VStack>
-                );
-              })
-            )}
+                    </VStack>
+                  );
+                })
+              )}
             </VStack>
 
             {/* Statistics */}
@@ -814,6 +832,16 @@ function DailyLifeDrawer({ children }: DailyLifeDrawerProps) {
                               <Button size="sm" onClick={() => void handleSaveRecurring(r)}>
                                 {t('common.save')}
                               </Button>
+                              <IconButton
+                                onClick={() => void handleDeleteRecurring(r.id)}
+                                size="sm"
+                                variant="ghost"
+                                colorPalette="red"
+                                aria-label="Delete recurring task"
+                                title={t('dailyLife.deleteRecurringTask')}
+                              >
+                                <FiTrash2 />
+                              </IconButton>
                             </HStack>
 
                             {(draft.repeat === 'interval_days' || draft.repeat === 'interval_weeks') && (
