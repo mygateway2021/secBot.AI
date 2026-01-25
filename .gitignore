@@ -101,10 +101,10 @@ models/piper_voice/*
 # Legacy and specific directories
 legacy/
 chat_history/
-knowledge_base/
 submodules/MeloTTS
 openapi_assistants.json
 openapi_memgpt.json
+/knowledge_base/
 
 # memory log
 mem.json
