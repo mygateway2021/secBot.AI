@@ -270,25 +270,25 @@ async def handle_group_member_turn(
         conf_uid=context.character_config.conf_uid,
         kb_config=kb_config,
     )
-    
+
     # Send RAG references to frontend if available (for UI display only)
     if rag_results:
         # Format RAG results for frontend display
         rag_references = []
         for result in rag_results:
-            rag_references.append({
-                "document": result.get("original_filename", result.get("filename", "Unknown")),
-                "text": result.get("text", ""),
-                "chunk_id": result.get("chunk_id", ""),
-            })
-        
+            rag_references.append(
+                {
+                    "document": result.get(
+                        "original_filename", result.get("filename", "Unknown")
+                    ),
+                    "text": result.get("text", ""),
+                    "chunk_id": result.get("chunk_id", ""),
+                }
+            )
+
         # Broadcast RAG references to all group members
         await broadcast_func(
-            group_members,
-            {
-                "type": "rag-references",
-                "references": rag_references
-            }
+            group_members, {"type": "rag-references", "references": rag_references}
         )
         logger.debug(f"📚 Broadcast {len(rag_references)} RAG references to group")
 

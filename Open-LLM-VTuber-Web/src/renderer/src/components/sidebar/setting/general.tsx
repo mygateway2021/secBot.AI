@@ -195,7 +195,7 @@ function General({ onSave, onCancel }: GeneralProps): JSX.Element {
 
   const characterPresetLabel = (
     <Flex align="center" gap={2} minW={0}>
-      <Text {...settingStyles.general.field.label} noOfLines={1}>
+      <Text {...settingStyles.general.field.label} lineClamp={1}>
         {t('settings.general.characterPreset')}
       </Text>
       <IconButton
@@ -205,7 +205,7 @@ function General({ onSave, onCancel }: GeneralProps): JSX.Element {
         variant="ghost"
         color="whiteAlpha.800"
         _hover={{ bg: 'whiteAlpha.200' }}
-        isDisabled={!selectedCharacterFilename}
+        disabled={!selectedCharacterFilename}
         onClick={async () => {
           setIsCharacterEditorOpen(true);
           await loadCharacterYaml();
@@ -319,7 +319,7 @@ function General({ onSave, onCancel }: GeneralProps): JSX.Element {
             onClick={() => {
               if (confUid) clearChatAvatarForConfUid(confUid);
             }}
-            isDisabled={!confUid || !currentChatAvatar}
+            disabled={!confUid || !currentChatAvatar}
           >
             Clear
           </Button>
@@ -350,7 +350,7 @@ function General({ onSave, onCancel }: GeneralProps): JSX.Element {
           <Button
             size="sm"
             onClick={() => avatarFileInputRef.current?.click()}
-            isDisabled={!confUid}
+            disabled={!confUid}
           >
             Upload image…
           </Button>
@@ -362,11 +362,11 @@ function General({ onSave, onCancel }: GeneralProps): JSX.Element {
         <Box
           width="120px"
           height="120px"
-          borderRadius="lg"
+          borderRadius="full"
           overflow="hidden"
           border="1px solid"
           borderColor="whiteAlpha.200"
-          bg="blackAlpha.400"
+          bg="gray.700"
         >
           {currentChatAvatar ? (
             <Image
@@ -377,9 +377,9 @@ function General({ onSave, onCancel }: GeneralProps): JSX.Element {
               objectFit="cover"
             />
           ) : (
-            <Flex width="100%" height="100%" align="center" justify="center">
-              <Text fontSize="xs" color="whiteAlpha.700">
-                No image
+            <Flex width="100%" height="100%" align="center" justify="center" bg="gray.700">
+              <Text fontSize="5xl" fontWeight="bold" color="whiteAlpha.800">
+                {confName?.charAt(0) || '?'}
               </Text>
             </Flex>
           )}

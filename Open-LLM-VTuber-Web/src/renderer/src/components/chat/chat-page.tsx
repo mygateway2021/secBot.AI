@@ -329,11 +329,11 @@ export default function ChatPage(): JSX.Element {
                   flexShrink={0}
                   width="200px"
                   height="200px"
-                  borderRadius="xl"
+                  borderRadius="full"
                   overflow="hidden"
                   border="2px solid"
                   borderColor="whiteAlpha.300"
-                  bg="blackAlpha.400"
+                  bg="gray.700"
                   boxShadow="lg"
                 >
                   {characterImageSrc ? (
@@ -345,9 +345,9 @@ export default function ChatPage(): JSX.Element {
                       objectFit="cover"
                     />
                   ) : (
-                    <Flex width="100%" height="100%" align="center" justify="center">
-                      <Text fontSize="xs" color="whiteAlpha.700" textAlign="center" px={2}>
-                        No image
+                    <Flex width="100%" height="100%" align="center" justify="center" bg="gray.700">
+                      <Text fontSize="7xl" fontWeight="bold" color="whiteAlpha.800">
+                        {characterName?.charAt(0) || '?'}
                       </Text>
                     </Flex>
                   )}

@@ -133,18 +133,22 @@ class KnowledgeBaseManager:
             List of result dictionaries with 'text', 'file_id', 'filename', 'original_filename', etc.
         """
         retriever = self._get_retriever(conf_uid)
-        logger.info(f"🔍 KB Manager: Searching for query='{query[:100]}...', top_k={top_k}, max_chars={max_chars}")
-        
+        logger.info(
+            f"🔍 KB Manager: Searching for query='{query[:100]}...', top_k={top_k}, max_chars={max_chars}"
+        )
+
         results = await retriever.search(query, top_k=top_k, max_chars=max_chars)
 
         # Enrich results with original filenames from metadata
         if results:
             metadata = await self.storage.load_metadata(conf_uid)
             file_id_to_original = {
-                doc["file_id"]: doc.get("original_filename", doc.get("stored_filename", "Unknown"))
+                doc["file_id"]: doc.get(
+                    "original_filename", doc.get("stored_filename", "Unknown")
+                )
                 for doc in metadata.get("documents", [])
             }
-            
+
             for result in results:
                 file_id = result.get("file_id")
                 if file_id and file_id in file_id_to_original:
@@ -157,8 +161,10 @@ class KnowledgeBaseManager:
         )
         if results:
             for i, result in enumerate(results[:3]):  # Log first 3 results
-                logger.debug(f"  Result {i+1}: {result.get('original_filename', result['filename'])} - {result['text'][:100]}...")
-        
+                logger.debug(
+                    f"  Result {i + 1}: {result.get('original_filename', result['filename'])} - {result['text'][:100]}..."
+                )
+
         return results
 
     async def list_documents(self, conf_uid: str) -> List[Dict]:

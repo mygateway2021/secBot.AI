@@ -14,7 +14,6 @@ from typing import Any
 from loguru import logger
 
 
-
 class _HTMLTextExtractor(HTMLParser):
     """Extract visible text from HTML content.
 
@@ -270,9 +269,7 @@ class DocumentProcessor:
 
         return await asyncio.to_thread(_read_epub)
 
-    async def process_document(
-        self, file_path: Path, file_id: str
-    ) -> dict[str, Any]:
+    async def process_document(self, file_path: Path, file_id: str) -> dict[str, Any]:
         """
         Process a document: extract text, chunk, and prepare for indexing.
 

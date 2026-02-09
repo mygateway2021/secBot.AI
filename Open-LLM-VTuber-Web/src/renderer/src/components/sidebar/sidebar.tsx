@@ -1,7 +1,7 @@
 /* eslint-disable react/require-default-props */
 import { Box, Button, Menu } from '@chakra-ui/react';
 import {
-  FiSettings, FiClock, FiPlus, FiChevronLeft, FiUsers, FiLayers, FiCalendar
+  FiSettings, FiClock, FiPlus, FiChevronLeft, FiUsers, FiLayers, FiCalendar, FiFlag
 } from 'react-icons/fi';
 import { memo } from 'react';
 import { sidebarStyles } from './sidebar-styles';
@@ -12,7 +12,9 @@ import HistoryDrawer from './history-drawer';
 import { useSidebar } from '@/hooks/sidebar/use-sidebar';
 import GroupDrawer from './group-drawer';
 import DailyLifeDrawer from './daily-life-drawer';
+import CountdownDrawer from './countdown-drawer';
 import { ModeType } from '@/context/mode-context';
+import { useTranslation } from 'react-i18next';
 
 // Type definitions
 interface SidebarProps {
@@ -112,10 +114,25 @@ const HeaderButtons = memo(({ onSettingsOpen, onNewHistory, setMode, currentMode
         <FiCalendar />
       </Button>
     </DailyLifeDrawer>
+
+    <CountdownButton />
   </Box>
 ));
 
 HeaderButtons.displayName = 'HeaderButtons';
+
+const CountdownButton = memo(() => {
+  const { t } = useTranslation();
+  return (
+    <CountdownDrawer>
+      <Button title={t('sidebar.countdown')}>
+        <FiFlag />
+      </Button>
+    </CountdownDrawer>
+  );
+});
+
+CountdownButton.displayName = 'CountdownButton';
 
 const SidebarContent = memo(({ 
   onSettingsOpen, 

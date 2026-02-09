@@ -32,6 +32,7 @@ async def handle_conversation_trigger(
     """Handle triggers that start a conversation"""
     metadata = None
     daily_schedule = data.get("daily_schedule")
+    countdown_target = data.get("countdown_target")
 
     if msg_type == "ai-speak-signal":
         try:
@@ -77,6 +78,12 @@ async def handle_conversation_trigger(
         if metadata is None:
             metadata = {}
         metadata["daily_schedule"] = daily_schedule
+
+    # Pass countdown_target to metadata for context injection
+    if countdown_target:
+        if metadata is None:
+            metadata = {}
+        metadata["countdown_target"] = countdown_target
 
     group = chat_group_manager.get_client_group(client_uid)
     if group and len(group.members) > 1:

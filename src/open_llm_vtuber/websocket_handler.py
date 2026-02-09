@@ -79,6 +79,7 @@ class WSMessage(TypedDict, total=False):
     file: Optional[str]
     display_text: Optional[dict]
     daily_schedule: Optional[str]
+    countdown_target: Optional[str]
 
 
 class WebSocketHandler:

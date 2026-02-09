@@ -208,17 +208,13 @@ class KBStorageManager:
 
         try:
             content = json.dumps(metadata, indent=2, ensure_ascii=False)
-            await asyncio.to_thread(
-                metadata_path.write_text, content, encoding="utf-8"
-            )
+            await asyncio.to_thread(metadata_path.write_text, content, encoding="utf-8")
             logger.debug(f"📝 Saved metadata for '{conf_uid}'")
         except Exception as e:
             logger.error(f"❌ Failed to save metadata for '{conf_uid}': {e}")
             raise
 
-    async def add_document_to_metadata(
-        self, conf_uid: str, doc_info: Dict
-    ) -> None:
+    async def add_document_to_metadata(self, conf_uid: str, doc_info: Dict) -> None:
         """
         Add a document entry to metadata.
 

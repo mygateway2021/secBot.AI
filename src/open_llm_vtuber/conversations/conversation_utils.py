@@ -28,7 +28,7 @@ async def create_batch_input(
 ) -> tuple[BatchInput, Optional[List[Dict]]]:
     """
     Create batch input for agent processing with optional KB retrieval.
-    
+
     Returns:
         Tuple of (BatchInput, Optional RAG results list)
     """
@@ -101,6 +101,19 @@ async def create_batch_input(
                 ),
             )
 
+    # Inject countdown target as context if present
+    if metadata and "countdown_target" in metadata:
+        countdown_text = metadata["countdown_target"]
+        if countdown_text and str(countdown_text).strip():
+            texts.insert(
+                0,  # Add at the beginning as context
+                TextData(
+                    source=TextSource.COUNTDOWN_TARGET,
+                    content=str(countdown_text),
+                    from_name=None,
+                ),
+            )
+
     batch_input = BatchInput(
         texts=texts,
         images=[
@@ -115,7 +128,7 @@ async def create_batch_input(
         else None,
         metadata=metadata,
     )
-    
+
     return batch_input, rag_results
 
 
